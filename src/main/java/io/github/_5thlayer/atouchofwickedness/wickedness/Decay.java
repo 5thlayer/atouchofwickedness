@@ -28,6 +28,11 @@ public final class Decay {
     public record State(int wickedness, long carry) {
     }
 
+    /** @return the in-game day the world's clock at {@code ticks} falls on */
+    public static long dayOf(long ticks) {
+        return Math.floorDiv(ticks, TICKS_PER_DAY);
+    }
+
     /** @return {@code state} once {@code elapsed} ticks of the clock have passed, at {@code perDay} a day */
     public static State over(State state, long elapsed, int perDay) {
         if (elapsed <= 0 || perDay <= 0) {

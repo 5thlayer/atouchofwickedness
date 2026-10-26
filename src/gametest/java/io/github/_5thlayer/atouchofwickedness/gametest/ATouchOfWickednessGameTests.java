@@ -60,8 +60,8 @@ public final class ATouchOfWickednessGameTests {
     private static void registerTests(RegisterGameTestsEvent event) {
         // Registered rather than borrowed, since the event hands out no lookup for vanilla's.
         var environment = event.registerEnvironment(id("default"), new TestEnvironmentDefinition.AllOf(List.of()));
-        var ownBatch = event.registerEnvironment(id("own_batch"), new TestEnvironmentDefinition.AllOf(List.of()));
-        var tests = new Registrar(event, environment, ownBatch);
+        var alone = event.registerEnvironment(id("alone"), new TestEnvironmentDefinition.AllOf(List.of()));
+        var tests = new Registrar(event, environment, alone);
         LoadTests.register(tests);
         CreativeTabTests.register(tests);
         WickedKillTests.register(tests);
@@ -85,15 +85,15 @@ public final class ATouchOfWickednessGameTests {
      * together, and the batches one after another, each of its own environment.
      */
     record Registrar(RegisterGameTestsEvent event, Holder<TestEnvironmentDefinition<?>> environment,
-            Holder<TestEnvironmentDefinition<?>> ownBatch) {
+            Holder<TestEnvironmentDefinition<?>> alone) {
 
         void test(String name, int maxTicks, Consumer<GameTestHelper> body) {
             register(name, maxTicks, environment, body);
         }
 
-        /** A test that runs after the others, such as one that moves the world's clock, which every test's players read. */
-        void testInOwnBatch(String name, int maxTicks, Consumer<GameTestHelper> body) {
-            register(name, maxTicks, ownBatch, body);
+        /** A test that runs alone, after the others, such as one that moves the world's clock, which every test's players read. */
+        void testAlone(String name, int maxTicks, Consumer<GameTestHelper> body) {
+            register(name, maxTicks, alone, body);
         }
 
         private void register(String name, int maxTicks, Holder<TestEnvironmentDefinition<?>> batch, Consumer<GameTestHelper> body) {

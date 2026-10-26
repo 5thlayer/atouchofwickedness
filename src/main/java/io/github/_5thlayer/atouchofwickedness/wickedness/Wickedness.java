@@ -86,23 +86,24 @@ public final class Wickedness {
         }
     }
 
-    /** Takes an Atonement of {@code amount} off the player's Wickedness, unless the player is in Creative or Spectator. */
+    /** Lowers the player's Wickedness by an Atonement of {@code amount}, unless the player is in Creative or Spectator. */
     public static void atone(ServerPlayer player, int amount) {
         if (counts(player) && amount > 0) {
             set(player, Atonement.lowered(of(player), amount));
         }
     }
 
-    /** Takes a gift's Atonement off the player's Wickedness, while their gifts today are under the cap. */
+    /** Lowers the player's Wickedness by a gift's Atonement, while their gifts today are under the cap. */
     public static void gift(ServerPlayer player) {
         if (!counts(player)) {
             return;
         }
         var tally = player.getData(TALLY);
-        long today = Atonement.Gifts.dayOf(player.level().getOverworldClockTime());
-        if (tally.gifts.counts(today, WickednessConfig.giftsPerDay())) {
+        var rules = WickednessConfig.atonementRules();
+        long today = Decay.dayOf(player.level().getOverworldClockTime());
+        if (tally.gifts.counts(today, rules.giftsPerDay())) {
             tally.gifts = tally.gifts.plusOne(today);
-            atone(player, WickednessConfig.gift());
+            atone(player, rules.gift());
         }
     }
 

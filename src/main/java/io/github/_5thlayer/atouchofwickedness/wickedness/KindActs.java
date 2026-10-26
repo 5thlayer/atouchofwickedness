@@ -24,9 +24,9 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The kind acts that take an {@link Atonement} off Wickedness, each credited to the player who did it:
- * breeding two animals, taming one, feeding a hurt tamed pet they own, curing a zombie villager, and
- * a villager picking up food they threw. Each listens last, so an act another mod cancels counts for
+ * The kind acts that atone, each lowering Wickedness by its {@link Atonement} and credited to the
+ * player who did it: breeding two animals, taming one, healing a hurt tamed pet they own by feeding
+ * it, curing a zombie villager, and gifting a villager food, which it picks up where they threw it. Each listens last, so an act another mod cancels counts for
  * nothing; a player in Creative or Spectator atones for nothing, as their kills add nothing.
  */
 public final class KindActs {
@@ -57,13 +57,13 @@ public final class KindActs {
 
     private static void onBreeding(BabyEntitySpawnEvent event) {
         if (event.getChild() != null && event.getCausedByPlayer() instanceof ServerPlayer player) {
-            Wickedness.atone(player, WickednessConfig.breeding());
+            Wickedness.atone(player, WickednessConfig.atonementRules().breeding());
         }
     }
 
     private static void onTaming(AnimalTameEvent event) {
         if (event.getTamer() instanceof ServerPlayer player) {
-            Wickedness.atone(player, WickednessConfig.taming());
+            Wickedness.atone(player, WickednessConfig.atonementRules().taming());
         }
     }
 
@@ -86,7 +86,7 @@ public final class KindActs {
             return;
         }
         float regained = Math.min(event.getAmount(), pet.getMaxHealth() - pet.getHealth());
-        Wickedness.atone(fed.owner(), Atonement.feeding(regained, WickednessConfig.feedingPerHeart()));
+        Wickedness.atone(fed.owner(), Atonement.healing(regained, WickednessConfig.atonementRules().healingPerHeart()));
     }
 
     private static void onConversion(LivingConversionEvent.Post event) {
@@ -97,7 +97,7 @@ public final class KindActs {
         // Who fed it the golden apple, as vanilla credits the cure's gossip and advancement.
         var curer = ((ZombieVillagerAccessor) zombie).atouchofwickedness$conversionStarter();
         if (curer != null && level.getPlayerByUUID(curer) instanceof ServerPlayer player) {
-            Wickedness.atone(player, WickednessConfig.curing());
+            Wickedness.atone(player, WickednessConfig.atonementRules().curing());
         }
     }
 }

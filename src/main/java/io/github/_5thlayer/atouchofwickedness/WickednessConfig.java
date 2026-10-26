@@ -3,6 +3,7 @@
 
 package io.github._5thlayer.atouchofwickedness;
 
+import io.github._5thlayer.atouchofwickedness.wickedness.Atonement;
 import io.github._5thlayer.atouchofwickedness.wickedness.Standing;
 import io.github._5thlayer.atouchofwickedness.wickedness.WickednessWeight;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -23,7 +24,7 @@ public final class WickednessConfig {
     private static final ModConfigSpec.IntValue DECAY_PER_DAY;
     private static final ModConfigSpec.IntValue BREEDING;
     private static final ModConfigSpec.IntValue TAMING;
-    private static final ModConfigSpec.IntValue FEEDING_PER_HEART;
+    private static final ModConfigSpec.IntValue HEALING_PER_HEART;
     private static final ModConfigSpec.IntValue CURING;
     private static final ModConfigSpec.IntValue GIFT;
     private static final ModConfigSpec.IntValue GIFTS_PER_DAY;
@@ -78,10 +79,10 @@ public final class WickednessConfig {
         TAMING = builder
                 .comment("What taming an animal takes off.")
                 .defineInRange("taming", 10, 0, 1_000_000);
-        FEEDING_PER_HEART = builder
-                .comment("What feeding a hurt tamed pet the player owns takes off for each whole heart it regains,",
-                        "so feeding a healthy pet takes off nothing.")
-                .defineInRange("feedingPerHeart", 1, 0, 1_000_000);
+        HEALING_PER_HEART = builder
+                .comment("What healing a hurt tamed pet the player owns, by feeding it, takes off for each whole heart",
+                        "it regains, so feeding a healthy pet takes off nothing.")
+                .defineInRange("healingPerHeart", 1, 0, 1_000_000);
         CURING = builder
                 .comment("What curing a zombie villager takes off.")
                 .defineInRange("curing", 40, 0, 1_000_000);
@@ -173,28 +174,9 @@ public final class WickednessConfig {
         return DECAY_PER_DAY.getAsInt();
     }
 
-    public static int breeding() {
-        return BREEDING.getAsInt();
-    }
-
-    public static int taming() {
-        return TAMING.getAsInt();
-    }
-
-    public static int feedingPerHeart() {
-        return FEEDING_PER_HEART.getAsInt();
-    }
-
-    public static int curing() {
-        return CURING.getAsInt();
-    }
-
-    public static int gift() {
-        return GIFT.getAsInt();
-    }
-
-    public static int giftsPerDay() {
-        return GIFTS_PER_DAY.getAsInt();
+    public static Atonement.Rules atonementRules() {
+        return new Atonement.Rules(BREEDING.getAsInt(), TAMING.getAsInt(), HEALING_PER_HEART.getAsInt(),
+                CURING.getAsInt(), GIFT.getAsInt(), GIFTS_PER_DAY.getAsInt());
     }
 
     public static int thresholdMin() {

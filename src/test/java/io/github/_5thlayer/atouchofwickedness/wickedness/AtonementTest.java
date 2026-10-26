@@ -11,13 +11,11 @@ import io.github._5thlayer.atouchofwickedness.wickedness.Atonement.Gifts;
 import org.junit.jupiter.api.Test;
 
 /**
- * Each Atonement takes its amount off Wickedness, never below 0: breeding 3, taming 10, curing a
- * zombie villager 40 and a gift 2 by default, and feeding a hurt pet 1 for each whole heart it
- * regains. Only so many gifts count each in-game day.
+ * Each Atonement lowers Wickedness by its amount, never below 0: breeding 3, taming 10, curing a
+ * zombie villager 40 and a gift 2 by default, and healing a pet 1 for each whole heart it regains.
+ * Only so many gifts count each in-game day.
  */
 class AtonementTest {
-
-    private static final int DAY = 24_000;
 
     @Test
     void eachAtonementTakesOffItsAmount() {
@@ -34,24 +32,16 @@ class AtonementTest {
     }
 
     @Test
-    void feedingTakesOffPerWholeHeartRegained() {
-        assertEquals(8, Atonement.feeding(16, 1));
-        assertEquals(2, Atonement.feeding(5, 1));
-        assertEquals(16, Atonement.feeding(16, 2));
+    void healingTakesOffPerWholeHeartRegained() {
+        assertEquals(8, Atonement.healing(16, 1));
+        assertEquals(2, Atonement.healing(5, 1));
+        assertEquals(16, Atonement.healing(16, 2));
     }
 
     @Test
-    void feedingAPetThatRegainsLessThanAHeartTakesOffNothing() {
-        assertEquals(0, Atonement.feeding(1, 1));
-        assertEquals(0, Atonement.feeding(0, 1));
-    }
-
-    @Test
-    void theDayIsTheClockInWholeDays() {
-        assertEquals(0, Gifts.dayOf(0));
-        assertEquals(0, Gifts.dayOf(DAY - 1));
-        assertEquals(1, Gifts.dayOf(DAY));
-        assertEquals(3, Gifts.dayOf(3 * DAY + 100));
+    void healingLessThanAHeartTakesOffNothing() {
+        assertEquals(0, Atonement.healing(1, 1));
+        assertEquals(0, Atonement.healing(0, 1));
     }
 
     @Test

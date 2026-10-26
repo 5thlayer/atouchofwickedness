@@ -4,22 +4,35 @@
 package io.github._5thlayer.atouchofwickedness.wickedness;
 
 /**
- * Atonement: a kind act takes its amount off Wickedness at once, never below 0. Feeding a hurt pet
- * takes off an amount per whole heart it regains, and only so many gifts to villagers count each
- * in-game day. Plain Java, so JUnit tests it; {@link KindActs} credits the acts.
+ * Atonement: a kind act lowers Wickedness at once by its amount, never below 0. Healing a hurt pet
+ * lowers it by an amount per whole heart the pet regains, and only so many gifts of food to villagers
+ * count each in-game day. Plain Java, so JUnit tests it; {@link KindActs} credits the acts.
  */
 public final class Atonement {
 
     private Atonement() {
     }
 
-    /** @return {@code wickedness} once an Atonement of {@code amount} is taken off, never below 0 */
-    public static int lowered(int wickedness, int amount) {
-        return Math.max(0, wickedness - Math.max(0, amount));
+    /**
+     * What each Atonement lowers Wickedness by.
+     *
+     * @param breeding        breeding two animals
+     * @param taming          taming an animal
+     * @param healingPerHeart healing a pet the player owns, for each whole heart it regains
+     * @param curing          curing a zombie villager
+     * @param gift            a villager picking up food the player threw
+     * @param giftsPerDay     how many gifts count each in-game day
+     */
+    public record Rules(int breeding, int taming, int healingPerHeart, int curing, int gift, int giftsPerDay) {
     }
 
-    /** @return what feeding a pet that regains {@code regained} health takes off, at {@code perHeart} a whole heart */
-    public static int feeding(float regained, int perHeart) {
+    /** @return {@code wickedness} lowered by an Atonement of {@code amount}, never below 0 */
+    public static int lowered(int wickedness, int amount) {
+        return Math.max(0, wickedness - amount);
+    }
+
+    /** @return what healing a pet by {@code regained} health lowers Wickedness by, at {@code perHeart} a whole heart */
+    public static int healing(float regained, int perHeart) {
         int hearts = (int) Math.floor(regained / 2);
         return Math.max(0, hearts) * perHeart;
     }
@@ -33,11 +46,6 @@ public final class Atonement {
     public record Gifts(int count, long day) {
 
         public static final Gifts NONE = new Gifts(0, 0);
-
-        /** @return the in-game day the clock's {@code ticks} fall on */
-        public static long dayOf(long ticks) {
-            return Math.floorDiv(ticks, Decay.TICKS_PER_DAY);
-        }
 
         /** @return whether a gift on {@code today} counts, when {@code cap} count a day */
         public boolean counts(long today, int cap) {

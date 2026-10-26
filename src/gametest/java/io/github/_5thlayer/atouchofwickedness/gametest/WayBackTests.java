@@ -3,6 +3,7 @@
 
 package io.github._5thlayer.atouchofwickedness.gametest;
 
+import io.github._5thlayer.atouchofwickedness.wickedness.Decay;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -24,7 +25,7 @@ import net.minecraft.world.item.Items;
  * The way back: Wickedness falls by 10 over an in-game day, and kind acts take it down at once,
  * each credited to the player who did it: breeding two animals 3, taming one 10, feeding a hurt pet
  * the player owns 1 per heart it regains, curing a zombie villager 40, and a villager picking up food
- * the player threw 2, five times a day.
+ * the player threw 2. That the gift cap stops a sixth gift is JUnit's alone.
  */
 final class WayBackTests {
 
@@ -37,13 +38,13 @@ final class WayBackTests {
     }
 
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
-        tests.testInOwnBatch("way_back_decay_a_day_takes_off_10", 20, WayBackTests::decay);
+        tests.testAlone("way_back_decay_a_day_takes_off_10", 20, WayBackTests::decay);
         tests.test("way_back_breeding_takes_off_3", 20, WayBackTests::breeding);
         tests.test("way_back_taming_takes_off_10", 20, WayBackTests::taming);
-        tests.test("way_back_feeding_a_hurt_pet_takes_off_1_per_heart", 20, WayBackTests::feedingAHurtPet);
+        tests.test("way_back_healing_a_hurt_pet_takes_off_1_per_heart", 20, WayBackTests::healingAHurtPet);
         tests.test("way_back_feeding_a_healthy_pet_takes_off_nothing", 20, WayBackTests::feedingAHealthyPet);
         tests.test("way_back_curing_a_zombie_villager_takes_off_40", 100, WayBackTests::curing);
-        tests.test("way_back_gifts_take_off_2_until_the_sixth_of_the_day", 200, WayBackTests::gifts);
+        tests.test("way_back_gift_of_bread_takes_off_2", 100, WayBackTests::gift);
     }
 
     private static void decay(GameTestHelper helper) {
@@ -53,7 +54,7 @@ final class WayBackTests {
         // A tick for Decay to read the clock, then a whole day passes at once, as sleeping skips a night.
         helper.startSequence()
                 .thenIdle(1)
-                .thenExecute(() -> clocks.setTotalTicks(clock, clocks.getTotalTicks(clock) + 24_000))
+                .thenExecute(() -> clocks.setTotalTicks(clock, clocks.getTotalTicks(clock) + Decay.TICKS_PER_DAY))
                 .thenWaitUntil(() -> assertWickedness(helper, player, WICKEDNESS - 10, "an in-game day"))
                 .thenSucceed();
     }
@@ -82,7 +83,7 @@ final class WayBackTests {
         helper.succeed();
     }
 
-    private static void feedingAHurtPet(GameTestHelper helper) {
+    private static void healingAHurtPet(GameTestHelper helper) {
         var player = wicked(helper);
         var wolf = pet(helper, player);
         wolf.setHealth(10);
@@ -116,18 +117,13 @@ final class WayBackTests {
         });
     }
 
-    private static void gifts(GameTestHelper helper) {
+    private static void gift(GameTestHelper helper) {
         var player = wicked(helper);
-        var villager = helper.spawnWithNoFreeWill(EntityType.VILLAGER, CREATURE);
-        var sequence = helper.startSequence();
-        for (int gift = 1; gift <= 6; gift++) {
-            int given = gift;
-            var thrown = new ItemEntity[1];
-            sequence.thenExecute(() -> thrown[0] = throwTo(player, villager, Items.BREAD))
-                    .thenWaitUntil(() -> helper.assertTrue(thrown[0].isRemoved(), "the villager has not picked up bread " + given + " yet"))
-                    .thenExecute(() -> assertWickedness(helper, player, WICKEDNESS - 2 * Math.min(given, 5), given + " gifts of bread on one day"));
-        }
-        sequence.thenSucceed();
+        var bread = throwTo(player, helper.spawnWithNoFreeWill(EntityType.VILLAGER, CREATURE), Items.BREAD);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(bread.isRemoved(), "the villager has not picked up the bread yet");
+            assertWickedness(helper, player, WICKEDNESS - 2, "a villager picking up bread the player threw");
+        });
     }
 
     private static ServerPlayer wicked(GameTestHelper helper) {
