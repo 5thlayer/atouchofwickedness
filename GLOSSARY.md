@@ -72,6 +72,10 @@ _Avoid_: Karma Compass (the jam draft's item), compass, gauge
 The rough band of a player's Wickedness against their Threshold that the Tally Stick shows and the Warnings track: Clean, Marked, Overdue or Forfeit.
 _Avoid_: stage (Madness's word), level
 
+**Visit cooldown**:
+The wait after a Bailiff arrives before another may come for the same player, however far over their Threshold they are.
+_Avoid_: Decay (the fall of Wickedness), grace period
+
 **Decay**:
 The slow, steady fall of Wickedness over time, so a modest rate of killing, such as farming, never adds up.
 _Avoid_: forgiveness, cooldown

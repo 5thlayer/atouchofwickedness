@@ -35,6 +35,7 @@ public final class WickednessConfig {
     private static final ModConfigSpec.DoubleValue FORFEIT;
     private static final ModConfigSpec.IntValue ARRIVAL_MIN_DISTANCE;
     private static final ModConfigSpec.IntValue ARRIVAL_MAX_DISTANCE;
+    private static final ModConfigSpec.IntValue SECONDS_BETWEEN_VISITS;
     private static final ModConfigSpec.DoubleValue BAILIFF_HEALTH;
     private static final ModConfigSpec.DoubleValue BAILIFF_DAMAGE;
     private static final ModConfigSpec.DoubleValue BAILIFF_KNOCKBACK_RESISTANCE;
@@ -123,6 +124,10 @@ public final class WickednessConfig {
         ARRIVAL_MAX_DISTANCE = builder
                 .comment("The farthest, in blocks across the ground, that a Bailiff arrives from its player.")
                 .defineInRange("arrivalMaxDistance", 24, 1, 64);
+        SECONDS_BETWEEN_VISITS = builder
+                .comment("How many seconds after a Bailiff arrives before another may come for the same player.",
+                        "A player still at or above their Threshold when it ends is visited again then.")
+                .defineInRange("secondsBetweenVisits", 300, 0, 86_400);
         BAILIFF_HEALTH = builder
                 .comment("The Bailiff's health, in half hearts.")
                 .defineInRange("health", 60.0, 1, 1024);
@@ -197,6 +202,10 @@ public final class WickednessConfig {
 
     public static int arrivalMaxDistance() {
         return Math.max(ARRIVAL_MIN_DISTANCE.getAsInt(), ARRIVAL_MAX_DISTANCE.getAsInt());
+    }
+
+    public static int ticksBetweenVisits() {
+        return SECONDS_BETWEEN_VISITS.getAsInt() * 20;
     }
 
     public static double bailiffHealth() {

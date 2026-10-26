@@ -20,7 +20,7 @@ import org.jspecify.annotations.Nullable;
  */
 public final class Arrival {
 
-    /** Spots tried before the visit is given up for now. */
+    /** Spots tried, in directions evenly spaced around the player, before the visit waits a while. */
     private static final int TRIES = 32;
 
     /** How far above and below the player a spot is looked for. */
@@ -59,8 +59,10 @@ public final class Arrival {
         var random = player.getRandom();
         int min = WickednessConfig.arrivalMinDistance();
         int max = WickednessConfig.arrivalMaxDistance();
+        double start = random.nextDouble() * Math.TAU;
         for (int i = 0; i < TRIES; i++) {
-            double angle = random.nextDouble() * Math.TAU;
+            // Every direction is tried once, as a raid looks for where to spawn.
+            double angle = start + i * Math.TAU / TRIES;
             double distance = min + random.nextDouble() * (max - min);
             int x = Mth.floor(player.getX() + Math.cos(angle) * distance);
             int z = Mth.floor(player.getZ() + Math.sin(angle) * distance);

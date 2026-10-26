@@ -23,9 +23,15 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * A player's Wickedness, which the player never sees as a number (ADR 0002), and their Threshold,
  * drawn at random when they first join and again after each visit. When Wickedness reaches the
  * Threshold, a Bailiff comes for the player ({@link Arrival}): Wickedness drops to 0 and a new
- * Threshold is drawn as it arrives. Both are copied through death, so dying changes neither.
+ * Threshold is drawn as it arrives. No other Bailiff comes for the player until the cooldown
+ * after that arrival is over. While the player stays at or above their Threshold, as when a
+ * Bailiff found no spot to arrive on or the cooldown still ran, a Bailiff tries again every second.
+ * Both are copied through death, so dying changes neither.
  */
 public final class Wickedness {
+
+    /** Ticks between a Bailiff's tries to arrive while the player is at or above their Threshold. */
+    private static final int RETRY_TICKS = 20;
 
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, ATouchOfWickedness.MOD_ID);
@@ -43,7 +49,10 @@ public final class Wickedness {
         ATTACHMENTS.register(modBus);
         // The Threshold is drawn on first join, so it is saved from then on.
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> event.getEntity().getData(TALLY));
-        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> event.getServer().getPlayerList().getPlayers().forEach(Wickedness::decay));
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
+            boolean retry = event.getServer().getTickCount() % RETRY_TICKS == 0;
+            event.getServer().getPlayerList().getPlayers().forEach(player -> tick(player, retry));
+        });
     }
 
     /** @return the player's Wickedness */
@@ -80,9 +89,22 @@ public final class Wickedness {
         var tally = player.getData(TALLY);
         tally.wickedness = Math.max(0, value);
         player.setData(TALLY, tally);
-        if (tally.wickedness >= tally.threshold && counts(player) && Arrival.arrive(player)) {
+        visit(player, tally);
+    }
+
+    /**
+     * Sends the Bailiff once the player's Wickedness is at their Threshold and the cooldown after
+     * the last one is over, and as it arrives resets Wickedness to 0, draws a new Threshold and
+     * starts the cooldown, in the tally the player holds.
+     */
+    private static void visit(ServerPlayer player, Tally tally) {
+        long now = player.level().getGameTime();
+        if (tally.wickedness >= tally.threshold && counts(player)
+                && VisitCooldown.over(tally.arrivedAt, now, WickednessConfig.ticksBetweenVisits())
+                && Arrival.arrive(player)) {
             tally.wickedness = 0;
             tally.threshold = draw(player.getRandom());
+            tally.arrivedAt = now;
         }
     }
 
@@ -104,6 +126,14 @@ public final class Wickedness {
         if (tally.gifts.counts(today, rules.giftsPerDay())) {
             tally.gifts = tally.gifts.plusOne(today);
             atone(player, rules.gift());
+        }
+    }
+
+    /** Runs the player's Decay, and on a retry tick tries the Bailiff's arrival again. */
+    private static void tick(ServerPlayer player, boolean retry) {
+        decay(player);
+        if (retry) {
+            visit(player, player.getData(TALLY));
         }
     }
 
