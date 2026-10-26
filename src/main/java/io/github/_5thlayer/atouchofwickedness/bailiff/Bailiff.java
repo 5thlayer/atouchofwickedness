@@ -57,9 +57,9 @@ import org.jspecify.annotations.Nullable;
  * rob it mugs its player instead: it goes for them, and its first hit that lands takes one stack at
  * random from their main inventory or hotbar, never the held item, their worn armour or off hand,
  * and it goes to taunt them. A player with nothing it may take it taunts at once, empty-handed.
- * Reaching its first container, or its player, at night, it falls asleep there until dawn, harmless,
- * lying down under rising Zs: the first hit on it deals double damage and wakes it, and its time on
- * site starts as it wakes. A player who hits it as it robs or taunts sends it fleeing at once. Once its time on site is up it
+ * Arriving at night, it lies down where it arrived and sleeps until dawn under rising Zs, harmless:
+ * the first hit on it deals double damage and wakes it, and its time on site starts as it wakes. A
+ * player who hits it as it robs or taunts sends it fleeing at once. Once its time on site is up it
  * flees whatever it has. Fleeing, it runs faster than a sprinting player, and once far enough from
  * them, or after a while however far it got, it stands still charging a teleport, when its player
  * can still kill it from afar, then vanishes with what it carries; one that vanishes with nothing
@@ -77,7 +77,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     /** Ticks the Bailiff tries to reach a container or its player before it gives up, as on one walled off. */
     private static final int TICKS_TO_REACH = 200;
 
-    /** How near, in blocks, the Bailiff comes to its player to taunt them, or to fall asleep by them. */
+    /** How near, in blocks, the Bailiff comes to its player to taunt them. */
     private static final double TAUNT_DISTANCE = 3;
 
     /** Ticks the Bailiff taunts its player for before it flees. */
@@ -110,8 +110,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     /** The container it has open, or null. */
     private @Nullable BlockPos robbing;
     private final List<ItemStack> stolen = new ArrayList<>();
-    /** Whether it has reached its first container or its player, where at night it falls asleep. */
-    private boolean reachedFirstTarget;
     private int ticksOnSite;
     private int ticksFleeing;
     /** Ticks it has stood charging its teleport, or -1 before it starts. */
@@ -152,7 +150,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     /**
      * Sends the Bailiff for {@code target}, with its stats from the config, as it arrives where it
      * stands: to rob the containers they opened within the robbing radius of here, or with none to
-     * mug them.
+     * mug them, and at night to sleep here first.
      */
     public void comeFor(ServerPlayer target) {
         player = target.getUUID();
@@ -170,6 +168,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         } else {
             phase = Phase.MUGGING;
         }
+        // Its work waits for the morning.
+        entityData.set(DATA_ASLEEP, isNight());
     }
 
     private void takeStats() {
@@ -206,28 +206,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         return entityData.get(DATA_TAUNTING);
     }
 
-    /** @return whether the Bailiff is asleep where it reached its first target, on the client too */
+    /** @return whether the Bailiff is asleep where it arrived, on the client too */
     public boolean isAsleep() {
         return entityData.get(DATA_ASLEEP);
-    }
-
-    /**
-     * The Bailiff reaches its first container, or its player, and at night falls asleep there.
-     *
-     * @return whether it fell asleep
-     */
-    private boolean fallsAsleepOnArriving() {
-        if (reachedFirstTarget) {
-            return false;
-        }
-        reachedFirstTarget = true;
-        if (!isNight()) {
-            return false;
-        }
-        entityData.set(DATA_ASLEEP, true);
-        setTarget(null);
-        getNavigation().stop();
-        return true;
     }
 
     /** @return whether it is night where the Bailiff stands */
@@ -289,9 +270,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         }
         if (phase != Phase.FLEEING) {
             if (phase == Phase.MUGGING) {
-                if (distanceTo(target) <= TAUNT_DISTANCE && fallsAsleepOnArriving()) {
-                    return;
-                }
                 setTarget(target);
             }
             if (++ticksOnSite >= WickednessConfig.ticksOnSite()) {
@@ -517,9 +495,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         private void walkTo(Container container) {
             if (next.closerToCenterThan(position(), REACH)) {
                 getNavigation().stop();
-                if (fallsAsleepOnArriving()) {
-                    return;
-                }
                 robbing = next;
                 container.startOpen(Bailiff.this);
                 ticks = 0;
@@ -615,10 +590,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
                 return;
             }
             getNavigation().stop();
-            // Only by its player: one it gave up on reaching it taunts from afar, awake.
-            if (distanceTo(target) <= TAUNT_DISTANCE && fallsAsleepOnArriving()) {
-                return;
-            }
             entityData.set(DATA_TAUNTING, true);
             ticks = 0;
             level.playSound(null, getX(), getY(), getZ(), BailiffContent.TAUNTS.get(), SoundSource.HOSTILE, 1.5F, 1.0F);
