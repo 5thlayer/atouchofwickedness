@@ -45,8 +45,32 @@ A sign, heard or seen in the world, that a player's Wickedness is nearing the Th
 _Avoid_: omen (vanilla's Bad Omen), alert
 
 **Bailiff**:
-The creature that comes for a player whose Wickedness has crossed the Threshold, to seize their goods rather than to kill them.
+The creature that comes for a player whose Wickedness has crossed the Threshold, to seize their goods rather than to kill them: first from containers the player has opened, then from the player.
 _Avoid_: Krampus (Klei's name), punisher, Jack-o'-lantern (a vanilla block)
+
+**Seizable**:
+A container the Bailiff may rob, such as a chest or a barrel, but only one its player has opened; an ender chest or a shulker box never is.
+_Avoid_: lootable, unlocked
+
+**Seal**:
+The material a killed Bailiff leaves, from which this Pillar crafts, so wickedness is sometimes chosen.
+_Avoid_: Wickedness Essence (the jam draft's item), essence
+
+**Strongbox**:
+A chest crafted from Seals that the Bailiff cannot seize.
+_Avoid_: safe, locked chest
+
+**Bailiff's Bag**:
+A rare roomy bag a killed Bailiff sometimes leaves, holding more than a bundle.
+_Avoid_: sack, backpack
+
+**Tally Stick**:
+An item crafted from a Seal that tells a player roughly how close their Wickedness is to the Threshold, and wears out with use.
+_Avoid_: Karma Compass (the jam draft's item), compass, gauge
+
+**Standing**:
+The rough band of a player's Wickedness against their Threshold that the Tally Stick shows and the Warnings track: Clean, Marked, Overdue or Forfeit.
+_Avoid_: stage (Madness's word), level
 
 **Decay**:
 The slow, steady fall of Wickedness over time, so a modest rate of killing, such as farming, never adds up.
