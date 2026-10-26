@@ -46,7 +46,7 @@ public final class Arrival {
         bailiff.snapTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, player.getRandom().nextFloat() * 360, 0);
         bailiff.comeFor(player);
         level.addFreshEntity(bailiff);
-        // At its player, so it sounds at its full whatever the distance it arrived from.
+        // At its player, so it sounds at its full loudness however far off it arrived.
         level.playSound(null, player.getX(), player.getY(), player.getZ(), BailiffContent.ARRIVES.get(), SoundSource.HOSTILE, 2.0F, 1.0F);
         return true;
     }

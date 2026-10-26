@@ -24,18 +24,15 @@
     "sounds": [
       {
         "name": "minecraft:block.chain.place",
-        "type": "event",
-        "volume": 2.0
+        "type": "event"
       },
       {
         "name": "minecraft:block.chain.break",
-        "type": "event",
-        "volume": 2.0
+        "type": "event"
       },
       {
         "name": "minecraft:block.chain.fall",
-        "type": "event",
-        "volume": 2.0
+        "type": "event"
       }
     ]
   },

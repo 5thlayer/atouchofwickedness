@@ -122,7 +122,9 @@ final class ArrivalTests {
         Wickedness.setThreshold(player, 3);
         Wickedness.set(player, 3);
         helper.succeedWhen(() -> {
-            var arrivals = player.heard.stream().filter(sound -> sound.getSound().value() == BailiffContent.ARRIVES.get()).toList();
+            var arrivals = player.heard.stream()
+                    .filter(sound -> sound.getSound().is(BailiffContent.ARRIVES.getKey()))
+                    .toList();
             if (arrivals.size() != 1) {
                 throw helper.assertionException("the player heard " + arrivals.size() + " arrivals, not 1");
             }

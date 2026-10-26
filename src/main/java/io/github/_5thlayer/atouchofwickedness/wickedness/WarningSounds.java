@@ -36,8 +36,9 @@ public final class WarningSounds {
             Map.of(Standing.MARKED, MARKED, Standing.OVERDUE, OVERDUE, Standing.FORFEIT, FORFEIT);
 
     /**
-     * Carries 128 blocks, so a Warning as far off as the config lets it, 32 blocks, still sounds at
-     * three quarters of its loudness, and the nearer bands near their full.
+     * Eight times each sound's own volume, so the quietest, vanilla's chains, carry 64 blocks: a
+     * Warning as far off as the config lets it sound, 32 blocks, still reaches its player at half
+     * its loudness or more, and the bell, defined far louder, at its full.
      */
     private static final float VOLUME = 8.0F;
 
