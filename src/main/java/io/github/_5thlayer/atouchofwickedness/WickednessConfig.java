@@ -55,7 +55,8 @@ public final class WickednessConfig {
     private static final ModConfigSpec.IntValue ROBBING_RADIUS;
     private static final ModConfigSpec.IntValue QUOTA;
     private static final ModConfigSpec.IntValue SECONDS_ON_SITE;
-    private static final ModConfigSpec.IntValue SECONDS_TO_VANISH;
+    private static final ModConfigSpec.IntValue VANISH_DISTANCE;
+    private static final ModConfigSpec.IntValue SECONDS_TO_TELEPORT;
     private static final ModConfigSpec.IntValue SEALS_MIN;
     private static final ModConfigSpec.IntValue SEALS_MAX;
     private static final ModConfigSpec.IntValue TALLY_STICK_USES;
@@ -197,14 +198,18 @@ public final class WickednessConfig {
                 .comment("How near, in blocks, to where it arrived a remembered container must be for the Bailiff to rob it.")
                 .defineInRange("robbingRadius", 32, 0, 128);
         QUOTA = builder
-                .comment("How many stacks a Bailiff takes on a visit, from its player's containers and from the player, before it flees.")
+                .comment("How many stacks a Bailiff takes from its player, when it found nothing to rob in their containers, before it flees.")
                 .defineInRange("quota", 5, 1, 64);
         SECONDS_ON_SITE = builder
                 .comment("How many seconds after it arrives a Bailiff flees, whatever it has taken.")
                 .defineInRange("secondsOnSite", 60, 1, 3600);
-        SECONDS_TO_VANISH = builder
-                .comment("How many seconds out of its player's sight a fleeing Bailiff vanishes after, with what it carries.")
-                .defineInRange("secondsToVanish", 3, 0, 600);
+        VANISH_DISTANCE = builder
+                .comment("How far, in blocks, from its player a fleeing Bailiff stops to charge its teleport away.")
+                .defineInRange("vanishDistance", 24, 1, 128);
+        SECONDS_TO_TELEPORT = builder
+                .comment("How many seconds a Bailiff stands still charging its teleport, when its player can still kill it,",
+                        "before it vanishes with what it carries.")
+                .defineInRange("secondsToTeleport", 2, 0, 60);
         SEALS_MIN = builder
                 .comment("The fewest Seals a killed Bailiff drops.")
                 .defineInRange("sealsMin", 1, 0, 64);
@@ -316,8 +321,12 @@ public final class WickednessConfig {
         return SECONDS_ON_SITE.getAsInt() * 20;
     }
 
-    public static int ticksToVanish() {
-        return SECONDS_TO_VANISH.getAsInt() * 20;
+    public static int vanishDistance() {
+        return VANISH_DISTANCE.getAsInt();
+    }
+
+    public static int ticksToTeleport() {
+        return SECONDS_TO_TELEPORT.getAsInt() * 20;
     }
 
     public static int sealsMin() {

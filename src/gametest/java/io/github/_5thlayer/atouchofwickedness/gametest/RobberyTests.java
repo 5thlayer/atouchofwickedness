@@ -3,9 +3,10 @@
 
 package io.github._5thlayer.atouchofwickedness.gametest;
 
-import io.github._5thlayer.atouchofwickedness.WickednessConfig;
+import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
@@ -13,11 +14,13 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
 /**
- * A Bailiff robs the Seizable containers its player opened near where it arrived before it goes
- * for them: never one they didn't open, another player's, an ender chest or a shulker box, nor one
- * out of reach. Hit while it robs, it turns on its player.
+ * A Bailiff with Seizable containers its player opened near where it arrived takes one stack from
+ * the nearest, taunts its player and flees, and never mugs them: never from one they didn't open,
+ * another player's, an ender chest or a shulker box, nor one out of reach. Hit as it robs or
+ * taunts, it flees at once.
  */
 final class RobberyTests {
 
@@ -32,10 +35,11 @@ final class RobberyTests {
     }
 
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
-        tests.test("robbery_the_chests_the_player_opened_are_robbed_then_the_player_but_not_one_beside_them", 400, RobberyTests::openedIsRobbed);
+        tests.test("robbery_one_stack_from_the_nearest_container_the_player_opened_then_a_taunt", 400, RobberyTests::openedIsRobbed);
         tests.test("robbery_another_players_chest_is_never_robbed", 300, RobberyTests::anotherPlayers);
         tests.test("robbery_an_ender_chest_or_a_shulker_box_is_never_robbed", 300, RobberyTests::enderChestAndShulkerBox);
-        tests.test("robbery_hit_while_robbing_it_turns_on_its_player", 400, RobberyTests::hitWhileRobbing);
+        tests.test("robbery_hit_as_it_robs_it_closes_the_chest_and_flees_with_nothing", 300, RobberyTests::hitWhileRobbing);
+        tests.test("robbery_hit_as_it_taunts_it_flees", 400, RobberyTests::hitWhileTaunting);
         tests.test("robbery_with_no_container_in_reach_it_goes_for_its_player", 200, RobberyTests::noneInReach);
         tests.test("robbery_a_block_a_datapack_adds_to_the_tag_is_robbed", 300, RobberyTests::datapackTag);
     }
@@ -43,20 +47,36 @@ final class RobberyTests {
     private static void openedIsRobbed(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
         Players.stock(player, new ItemStack(Items.EMERALD, 7));
-        var alsoOpened = new BlockPos(2, 1, 2);
+        var farther = new BlockPos(2, 1, 2);
         stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
-        stocked(helper, alsoOpened, Blocks.BARREL, new ItemStack(Items.COAL, 5), new ItemStack(Items.COPPER_INGOT, 2));
+        stocked(helper, farther, Blocks.BARREL, new ItemStack(Items.COAL, 5), new ItemStack(Items.COPPER_INGOT, 2));
+        // Nearer the Bailiff than either, but never opened.
         stocked(helper, BESIDE, Blocks.CHEST, new ItemStack(Items.EMERALD, 4), new ItemStack(Items.IRON_INGOT, 6));
         open(helper, player, OPENED);
-        open(helper, player, alsoOpened);
-        Bailiffs.comeFor(helper, BAILIFF, player);
-        helper.failIfEver(() -> assertStacks(helper, BESIDE, 2, "the Bailiff robbed a chest its player never opened"));
-        // Four stacks from the two it robs, and the fifth of its quota from its player.
-        helper.succeedWhen(() -> {
-            assertStacks(helper, OPENED, 0, "the Bailiff has not robbed the chest its player opened");
-            assertStacks(helper, alsoOpened, 0, "the Bailiff has not robbed the barrel its player opened");
-            assertRobbedOf(helper, player);
-        });
+        open(helper, player, farther);
+        var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    if (!bailiff.isFleeing()) {
+                        throw helper.assertionException("the Bailiff has not fled");
+                    }
+                })
+                .thenExecute(() -> {
+                    assertStacks(helper, OPENED, 1, "the Bailiff did not take one stack from the nearest chest its player opened");
+                    assertStacks(helper, farther, 2, "the Bailiff robbed a second container");
+                    assertStacks(helper, BESIDE, 2, "the Bailiff robbed a chest its player never opened");
+                    if (Bailiffs.stacksIn(player.getInventory()) != 1) {
+                        throw helper.assertionException("the Bailiff mugged its player after robbing their chest");
+                    }
+                    if (player.heard.stream().noneMatch(sound -> sound.getSound().is(BailiffContent.TAUNTS.getKey()))) {
+                        throw helper.assertionException("the player never heard the Bailiff taunt them");
+                    }
+                    if (player.actionBar.stream().noneMatch(shown -> shown.getContents() instanceof TranslatableContents translatable
+                            && translatable.getKey().equals("entity.atouchofwickedness.bailiff.taunt"))) {
+                        throw helper.assertionException("the player was never told the Bailiff took its due");
+                    }
+                })
+                .thenSucceed();
     }
 
     private static void anotherPlayers(GameTestHelper helper) {
@@ -91,41 +111,52 @@ final class RobberyTests {
 
     private static void hitWhileRobbing(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        int quota = WickednessConfig.quota();
-        for (int stack = 0; stack < quota; stack++) {
-            Players.stock(player, new ItemStack(Items.EMERALD, stack + 1));
-        }
-        var stacks = new ItemStack[quota + 3];
-        for (int stack = 0; stack < stacks.length; stack++) {
-            stacks[stack] = new ItemStack(Items.LAPIS_LAZULI, stack + 1);
-        }
-        stocked(helper, OPENED, Blocks.CHEST, stacks);
+        Players.stock(player, new ItemStack(Items.EMERALD, 7));
+        stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
         open(helper, player, OPENED);
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
-        // Its hits mustn't kill the player before it has met its quota.
-        helper.onEachTick(() -> player.setHealth(player.getMaxHealth()));
-        int[] leftAtTheHit = new int[1];
+        var chest = helper.absolutePos(OPENED);
         helper.startSequence()
-                .thenWaitUntil(() -> assertStacks(helper, OPENED, stacks.length - 1, "the Bailiff has not started robbing the chest"))
+                .thenWaitUntil(() -> {
+                    if (ChestBlockEntity.getOpenCount(helper.getLevel(), chest) == 0) {
+                        throw helper.assertionException("the Bailiff has not opened the chest");
+                    }
+                })
                 .thenExecute(() -> {
-                    leftAtTheHit[0] = stacksIn(helper, OPENED);
                     player.attack(bailiff);
-                    if (bailiff.isRobbing()) {
-                        throw helper.assertionException("hit while robbing, the Bailiff went on robbing");
+                    if (!bailiff.isFleeing()) {
+                        throw helper.assertionException("hit as it robbed, the Bailiff did not flee");
                     }
                 })
                 .thenWaitUntil(() -> {
-                    if (!bailiff.isFleeing()) {
-                        throw helper.assertionException("the Bailiff has not met its quota");
+                    if (ChestBlockEntity.getOpenCount(helper.getLevel(), chest) != 0) {
+                        throw helper.assertionException("the Bailiff left the chest open as it fled");
+                    }
+                })
+                .thenExecuteFor(40, () -> {
+                    assertStacks(helper, OPENED, 2, "the Bailiff robbed the chest after its player hit it");
+                    if (Bailiffs.stacksIn(player.getInventory()) != 1) {
+                        throw helper.assertionException("the Bailiff mugged its player after they hit it");
+                    }
+                })
+                .thenSucceed();
+    }
+
+    private static void hitWhileTaunting(GameTestHelper helper) {
+        var player = Players.join(helper, PLAYER);
+        stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3));
+        open(helper, player, OPENED);
+        var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    if (!bailiff.isTaunting()) {
+                        throw helper.assertionException("the Bailiff has not started taunting its player");
                     }
                 })
                 .thenExecute(() -> {
-                    assertStacks(helper, OPENED, leftAtTheHit[0], "the Bailiff robbed the chest after its player hit it");
-                    int fromTheChest = stacks.length - leftAtTheHit[0];
-                    int fromThePlayer = quota - Bailiffs.stacksIn(player.getInventory());
-                    if (fromThePlayer != quota - fromTheChest) {
-                        throw helper.assertionException("after " + fromTheChest + " from the chest the Bailiff took "
-                                + fromThePlayer + " stacks from its player, not the rest of its quota");
+                    player.attack(bailiff);
+                    if (!bailiff.isFleeing()) {
+                        throw helper.assertionException("hit as it taunted, the Bailiff did not flee");
                     }
                 })
                 .thenSucceed();

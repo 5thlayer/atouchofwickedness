@@ -9,6 +9,35 @@
       }
     ]
   },
+  "entity.bailiff.taunts": {
+    "subtitle": "subtitles.atouchofwickedness.entity.bailiff.taunts",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wandering_trader.no",
+        "type": "event",
+        "pitch": 1.4
+      }
+    ]
+  },
+  "entity.bailiff.charges": {
+    "subtitle": "subtitles.atouchofwickedness.entity.bailiff.charges",
+    "sounds": [
+      {
+        "name": "minecraft:entity.illusioner.prepare_mirror",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.bailiff.vanishes": {
+    "subtitle": "subtitles.atouchofwickedness.entity.bailiff.vanishes",
+    "sounds": [
+      {
+        "name": "minecraft:entity.enderman.teleport",
+        "type": "event",
+        "pitch": 0.8
+      }
+    ]
+  },
   "warning.marked": {
     "subtitle": "subtitles.atouchofwickedness.warning.marked",
     "sounds": [

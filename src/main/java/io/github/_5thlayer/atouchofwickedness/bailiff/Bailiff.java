@@ -13,8 +13,14 @@ import java.util.function.IntPredicate;
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.WickednessItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.ContainerUser;
@@ -40,37 +46,59 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * The creature that comes for a player whose Wickedness reached their Threshold, to rob them rather
- * than kill them (ADR 0004). First it robs the Seizable containers its player opened that are near
- * where it arrived, nearest first: it opens each as a player would, lid and sound, and takes one
- * stack at random from it every half second until it is empty (ADR 0003). Then it goes for its
- * player, and each of its hits that lands takes one stack at random from their main inventory or
- * hotbar, never the held item, their worn armour or off hand. A player who hits it while it robs
- * turns it on them at once. Once it has taken its quota, or its time on site is up, it flees faster
- * than a sprinting player, and a few seconds out of its player's sight it vanishes with what it
- * carries. Killed, it drops everything it stole and a few Seals. It is never saved, so a visit never
- * outlasts the server.
+ * than kill them (ADR 0004). With Seizable containers its player opened near where it arrived, it
+ * robs the base: it walks to the nearest, opens it as a player would, lid and sound, and takes one
+ * stack at random from it, or moves on to the next when it is empty (ADR 0003). That one stack is
+ * its haul: it walks up to its player, shakes its head at them mocking, and flees. With nothing to
+ * rob it mugs its player instead: it goes for them, and each of its hits that lands takes one stack
+ * at random from their main inventory or hotbar, never the held item, their worn armour or off
+ * hand, until it has its quota. A player who hits it as it robs or taunts sends it fleeing at once.
+ * Once its time on site is up it flees whatever it has. Fleeing, it runs faster than a sprinting
+ * player, and once far enough from them, or after a while however far it got, it stands still
+ * charging a teleport, when its player can still kill it from afar, then vanishes with what it
+ * carries. Killed, it drops everything it stole and a few Seals. It is never saved, so a visit
+ * never outlasts the server.
  */
 public final class Bailiff extends PathfinderMob implements ContainerUser {
 
     /** How near, in blocks, the Bailiff robs a container from: the centre of the block to its feet. */
     private static final double REACH = 2.5;
 
-    /** Ticks between the stacks the Bailiff takes from a container it has open. */
-    private static final int TICKS_PER_STACK = 10;
+    /** Ticks the Bailiff holds a container open before it takes its stack. */
+    private static final int TICKS_TO_TAKE = 10;
 
-    /** Ticks the Bailiff tries to reach a container before it gives up on it, as one walled off. */
+    /** Ticks the Bailiff tries to reach a container or its player before it gives up, as on one walled off. */
     private static final int TICKS_TO_REACH = 200;
 
+    /** How near, in blocks, the Bailiff comes to its player to taunt them. */
+    private static final double TAUNT_DISTANCE = 3;
+
+    /** Ticks the Bailiff taunts its player for before it flees. */
+    private static final int TICKS_TAUNTING = 40;
+
+    /** Ticks a fleeing Bailiff runs for before it charges its teleport wherever it got to, as when cornered. */
+    private static final int TICKS_TO_GET_AWAY = 400;
+
+    /** Whether the Bailiff is shaking its head at its player, which its renderer draws. */
+    private static final EntityDataAccessor<Boolean> DATA_TAUNTING = SynchedEntityData.defineId(Bailiff.class, EntityDataSerializers.BOOLEAN);
+
+    /** What the Bailiff is about: robbing the base then taunting, or mugging its player, then fleeing. */
+    private enum Phase {
+        ROBBING, TAUNTING, MUGGING, FLEEING
+    }
+
     private @Nullable UUID player;
-    /** The containers still to rob, its player's, near where it arrived. */
+    private Phase phase = Phase.MUGGING;
+    /** The containers still to try, its player's, near where it arrived. */
     private final List<BlockPos> toRob = new ArrayList<>();
     /** The container it has open, or null. */
     private @Nullable BlockPos robbing;
     private final List<ItemStack> stolen = new ArrayList<>();
     private final Quota quota = new Quota(WickednessConfig.quota());
     private int ticksOnSite;
-    private int ticksUnseen;
-    private boolean fleeing;
+    private int ticksFleeing;
+    /** Ticks it has stood charging its teleport, or -1 before it starts. */
+    private int ticksCharging = -1;
 
     public Bailiff(EntityType<? extends Bailiff> type, Level level) {
         super(type, level);
@@ -87,17 +115,25 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     }
 
     @Override
+    protected void defineSynchedData(SynchedEntityData.Builder entityData) {
+        super.defineSynchedData(entityData);
+        entityData.define(DATA_TAUNTING, false);
+    }
+
+    @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new Flee());
         goalSelector.addGoal(2, new Rob());
+        goalSelector.addGoal(2, new Taunt());
         goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.0, true));
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 16));
     }
 
     /**
      * Sends the Bailiff for {@code target}, with its stats from the config, as it arrives where it
-     * stands, to rob first the containers they opened within the robbing radius of here.
+     * stands: to rob the containers they opened within the robbing radius of here, or with none to
+     * mug them.
      */
     public void comeFor(ServerPlayer target) {
         player = target.getUUID();
@@ -108,6 +144,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         Seizable.opened(target, target.level()).stream()
                 .filter(pos -> pos.distSqr(arrival) <= radius * radius)
                 .forEach(toRob::add);
+        phase = toRob.isEmpty() ? Phase.MUGGING : Phase.ROBBING;
     }
 
     private void takeStats() {
@@ -131,12 +168,22 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
     /** @return whether the Bailiff is done and running off with what it took */
     public boolean isFleeing() {
-        return fleeing;
+        return phase == Phase.FLEEING;
     }
 
-    /** @return whether the Bailiff is still robbing its player's containers, before it goes for them */
+    /** @return whether the Bailiff is still robbing its player's containers */
     public boolean isRobbing() {
-        return !fleeing && !toRob.isEmpty();
+        return phase == Phase.ROBBING;
+    }
+
+    /** @return whether the Bailiff is shaking its head at its player, on the client too */
+    public boolean isTaunting() {
+        return entityData.get(DATA_TAUNTING);
+    }
+
+    /** @return whether the Bailiff stands charging its teleport away */
+    public boolean isCharging() {
+        return ticksCharging >= 0;
     }
 
     @Override
@@ -148,8 +195,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             discard();
             return;
         }
-        if (!fleeing) {
-            if (!isRobbing()) {
+        if (phase != Phase.FLEEING) {
+            if (phase == Phase.MUGGING) {
                 setTarget(target);
             }
             if (++ticksOnSite >= WickednessConfig.ticksOnSite()) {
@@ -157,11 +204,28 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             }
             return;
         }
-        ticksUnseen = target.hasLineOfSight(this) ? 0 : ticksUnseen + 1;
-        if (ticksUnseen >= WickednessConfig.ticksToVanish()) {
-            // It vanishes with what it carries.
-            discard();
+        if (!isCharging() && (distanceTo(target) >= WickednessConfig.vanishDistance() || ++ticksFleeing >= TICKS_TO_GET_AWAY)) {
+            ticksCharging = 0;
+            level.playSound(null, getX(), getY(), getZ(), BailiffContent.CHARGES.get(), SoundSource.HOSTILE, 2.0F, 1.0F);
         }
+        if (isCharging()) {
+            charge(level);
+        }
+    }
+
+    /** Stands charging its teleport, and once charged vanishes with what it carries. */
+    private void charge(ServerLevel level) {
+        // Stock still, so its player can take aim.
+        getNavigation().stop();
+        getMoveControl().setWait();
+        setDeltaMovement(getDeltaMovement().multiply(0, 1, 0));
+        level.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1, getZ(), 6, 0.3, 0.8, 0.3, 0.6);
+        if (++ticksCharging < WickednessConfig.ticksToTeleport()) {
+            return;
+        }
+        level.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY() + 1, getZ(), 48, 0.3, 0.8, 0.3, 0.2);
+        level.playSound(null, getX(), getY(), getZ(), BailiffContent.VANISHES.get(), SoundSource.HOSTILE, 2.0F, 1.0F);
+        discard();
     }
 
     private @Nullable ServerPlayer target(ServerLevel level) {
@@ -175,7 +239,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     @Override
     public boolean doHurtTarget(ServerLevel level, Entity target) {
         boolean landed = super.doHurtTarget(level, target);
-        if (landed && !fleeing && target instanceof ServerPlayer hit && cameFor(hit)) {
+        if (landed && phase == Phase.MUGGING && target instanceof ServerPlayer hit && cameFor(hit)) {
             steal(hit);
         }
         return landed;
@@ -184,25 +248,32 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
         boolean hurt = super.hurtServer(level, source, damage);
-        if (hurt && isRobbing() && source.getEntity() instanceof ServerPlayer hitter && cameFor(hitter)) {
-            // Caught at it, it leaves the rest of the containers and turns on its player.
-            toRob.clear();
+        if (hurt && (phase == Phase.ROBBING || phase == Phase.TAUNTING)
+                && source.getEntity() instanceof ServerPlayer hitter && cameFor(hitter)) {
+            // Caught at it, it runs with whatever it has.
+            flee();
         }
         return hurt;
     }
 
     /**
      * Takes one stack at random from the main inventory or hotbar, never the held item: the one in
-     * the selected slot as the hit lands, so the player keeps what they fight with.
+     * the selected slot as the hit lands, so the player keeps what they fight with. It flees once it
+     * has its quota.
      */
     private void steal(ServerPlayer target) {
         var inventory = target.getInventory();
-        take(inventory, inventory.getNonEquipmentItems().size(), slot -> slot == inventory.getSelectedSlot());
+        if (take(inventory, inventory.getNonEquipmentItems().size(), slot -> slot == inventory.getSelectedSlot())) {
+            quota.take();
+            if (quota.isMet()) {
+                flee();
+            }
+        }
     }
 
     /**
      * Takes one stack at random from the first {@code slots} of {@code container}, but none that
-     * {@code kept} keeps, towards the quota, and flees once the quota is met.
+     * {@code kept} keeps.
      *
      * @return whether there was a stack to take
      */
@@ -219,11 +290,12 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         int slot = filled.get(getRandom().nextInt(filled.size()));
         stolen.add(container.removeItemNoUpdate(slot));
         container.setChanged();
-        quota.take();
-        if (quota.isMet()) {
-            flee();
-        }
         return true;
+    }
+
+    private void flee() {
+        phase = Phase.FLEEING;
+        setTarget(null);
     }
 
     @Override
@@ -241,11 +313,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     @Override
     public double getContainerInteractionRange() {
         return REACH;
-    }
-
-    private void flee() {
-        fleeing = true;
-        setTarget(null);
     }
 
     @Override
@@ -271,9 +338,10 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     }
 
     /**
-     * Robs its player's containers, the nearest first: walks to it, opens it and takes a stack from
-     * it every half second until it is empty, then moves on to the next. One it can't reach in ten
-     * seconds, or that is no longer there, it leaves.
+     * Robs the base, the nearest of its player's containers first: walks to it, opens it, and after
+     * half a second takes one stack from it, its haul, and goes to taunt. An empty one it closes and
+     * moves on from, and one it can't reach in ten seconds, or that is no longer there, it leaves.
+     * With none left and nothing taken, it mugs its player instead.
      */
     private final class Rob extends Goal {
 
@@ -291,14 +359,14 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
         @Override
         public boolean requiresUpdateEveryTick() {
-            // Its ticks count game ticks: half a second a stack, ten to reach a container.
+            // Its ticks count game ticks: half a second to take, ten to reach a container.
             return true;
         }
 
         @Override
         public void tick() {
             // Ticked on the off ticks too, before the selector checks it should go on: done, or
-            // turned on its player, it may have nothing left to rob.
+            // sent fleeing, it may have nothing left to rob.
             if (!isRobbing() || !(level() instanceof ServerLevel level)) {
                 return;
             }
@@ -315,8 +383,12 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             ticks++;
             if (robbing == null) {
                 walkTo(container);
-            } else if (ticks % TICKS_PER_STACK == 0 && !take(container, container.getContainerSize(), slot -> false)) {
+            } else if (ticks >= TICKS_TO_TAKE) {
+                boolean took = take(container, container.getContainerSize(), slot -> false);
                 leave();
+                if (took) {
+                    phase = Phase.TAUNTING;
+                }
             }
         }
 
@@ -343,6 +415,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             close();
             toRob.remove(next);
             next = null;
+            if (toRob.isEmpty() && phase == Phase.ROBBING) {
+                phase = Phase.MUGGING;
+            }
         }
 
         private void close() {
@@ -363,7 +438,72 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         }
     }
 
-    /** Runs from its player, faster than they can sprint. */
+    /**
+     * With its haul from the base, walks up to its player, or as near as it gets in ten seconds,
+     * and taunts them: shakes its head with a mocking sound, and tells them in the action bar. Then
+     * it flees.
+     */
+    private final class Taunt extends Goal {
+
+        private int ticks;
+
+        Taunt() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return phase == Phase.TAUNTING;
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void start() {
+            ticks = 0;
+        }
+
+        @Override
+        public void tick() {
+            if (phase != Phase.TAUNTING || !(level() instanceof ServerLevel level)) {
+                return;
+            }
+            var target = target(level);
+            if (target == null) {
+                return;
+            }
+            getLookControl().setLookAt(target);
+            ticks++;
+            if (isTaunting()) {
+                if (ticks >= TICKS_TAUNTING) {
+                    flee();
+                }
+                return;
+            }
+            if (distanceTo(target) > TAUNT_DISTANCE && ticks <= TICKS_TO_REACH) {
+                if (getNavigation().isDone()) {
+                    getNavigation().moveTo(target, 1.0);
+                }
+                return;
+            }
+            getNavigation().stop();
+            entityData.set(DATA_TAUNTING, true);
+            ticks = 0;
+            level.playSound(null, getX(), getY(), getZ(), BailiffContent.TAUNTS.get(), SoundSource.HOSTILE, 1.5F, 1.0F);
+            target.sendOverlayMessage(Component.translatable("entity.atouchofwickedness.bailiff.taunt"));
+        }
+
+        @Override
+        public void stop() {
+            entityData.set(DATA_TAUNTING, false);
+            getNavigation().stop();
+        }
+    }
+
+    /** Runs from its player, faster than they can sprint, until it stands charging its teleport. */
     private final class Flee extends Goal {
 
         Flee() {
@@ -372,7 +512,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
         @Override
         public boolean canUse() {
-            return fleeing && level() instanceof ServerLevel level && target(level) != null;
+            return isFleeing() && !isCharging() && level() instanceof ServerLevel level && target(level) != null;
         }
 
         @Override

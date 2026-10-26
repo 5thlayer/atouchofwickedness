@@ -14,7 +14,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** The Bailiff, as a creature, and the sound of its arrival. */
+/** The Bailiff, as a creature, and its sounds: its arrival, its taunt and its teleport away. */
 public final class BailiffContent {
 
     private static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(ATouchOfWickedness.MOD_ID);
@@ -25,10 +25,22 @@ public final class BailiffContent {
             Bailiff::new, MobCategory.MISC, builder -> builder.sized(0.6F, 1.95F).eyeHeight(1.62F).clientTrackingRange(10).noSave());
 
     /** Heard by everyone near the player a Bailiff arrives for; its subtitle reads "Bailiff arrives". */
-    public static final DeferredHolder<SoundEvent, SoundEvent> ARRIVES = SOUNDS.register("entity.bailiff.arrives",
-            () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(ATouchOfWickedness.MOD_ID, "entity.bailiff.arrives")));
+    public static final DeferredHolder<SoundEvent, SoundEvent> ARRIVES = sound("entity.bailiff.arrives");
+
+    /** The Bailiff mocking the player it robbed, a wandering trader's refusal pitched up; its subtitle reads "Bailiff taunts". */
+    public static final DeferredHolder<SoundEvent, SoundEvent> TAUNTS = sound("entity.bailiff.taunts");
+
+    /** The Bailiff starting to charge its teleport away; its subtitle reads "Bailiff gathers itself". */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CHARGES = sound("entity.bailiff.charges");
+
+    /** The Bailiff teleporting away with what it carries, an enderman's woosh; its subtitle reads "Bailiff vanishes". */
+    public static final DeferredHolder<SoundEvent, SoundEvent> VANISHES = sound("entity.bailiff.vanishes");
 
     private BailiffContent() {
+    }
+
+    private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
+        return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(ATouchOfWickedness.MOD_ID, name)));
     }
 
     public static void register(IEventBus modBus) {

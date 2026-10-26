@@ -3,18 +3,20 @@
 
 package io.github._5thlayer.atouchofwickedness.gametest;
 
+import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.bailiff.Bailiff;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /**
- * A Bailiff flees once it has taken 5 stacks, or 60 seconds after it arrived, and a few seconds out
- * of its player's sight it vanishes with what it took, dropping none of it.
+ * A Bailiff flees once it has taken 5 stacks, or 60 seconds after it arrived, and once far enough
+ * from its player it stands still charging its teleport, then vanishes with what it took, dropping
+ * none of it.
  */
 final class FleeTests {
 
@@ -27,7 +29,7 @@ final class FleeTests {
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
         tests.test("flee_after_five_stacks", 20, FleeTests::afterFiveStacks);
         tests.test("flee_after_sixty_seconds", 1_260, FleeTests::afterSixtySeconds);
-        tests.test("flee_vanishes_with_its_goods_out_of_sight", 300, FleeTests::vanishes);
+        tests.test("flee_far_from_its_player_it_charges_then_vanishes_with_its_goods", 200, FleeTests::vanishes);
     }
 
     private static void afterFiveStacks(GameTestHelper helper) {
@@ -76,7 +78,8 @@ final class FleeTests {
     }
 
     private static void vanishes(GameTestHelper helper) {
-        var player = Players.join(helper, PLAYER);
+        // High in the air, beyond the vanishing distance of a Bailiff on the platform.
+        var player = Players.join(helper, PLAYER.above(30));
         for (int count = 1; count <= 5; count++) {
             Players.stock(player, new ItemStack(Items.DIAMOND, count));
         }
@@ -84,25 +87,35 @@ final class FleeTests {
         for (int hit = 1; hit <= 5; hit++) {
             Bailiffs.hit(helper, bailiff, player);
         }
-        // Walled in, the player sees nothing.
-        for (int x = -1; x <= 1; x++) {
-            for (int y = 0; y <= 2; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    if (x != 0 || z != 0 || y == 2) {
-                        helper.setBlock(PLAYER.offset(x, y, z), Blocks.STONE);
-                    }
-                }
-            }
-        }
         var around = new AABB(bailiff.blockPosition()).inflate(64);
-        helper.succeedWhen(() -> {
-            if (!bailiff.isRemoved()) {
-                throw helper.assertionException("the Bailiff is still here");
-            }
-            var dropped = helper.getLevel().getEntitiesOfClass(ItemEntity.class, around, item -> item.getItem().is(Items.DIAMOND));
-            if (!dropped.isEmpty()) {
-                throw helper.assertionException("the Bailiff left " + dropped.size() + " stacks of diamonds behind");
-            }
-        });
+        Vec3[] chargedFrom = new Vec3[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    if (!bailiff.isCharging()) {
+                        throw helper.assertionException("the Bailiff has not started charging its teleport");
+                    }
+                })
+                .thenExecute(() -> chargedFrom[0] = bailiff.position())
+                // Its player's chance to kill it from afar: it stands still and stays.
+                .thenExecuteFor(Math.max(0, WickednessConfig.ticksToTeleport() - 2), () -> {
+                    if (bailiff.isRemoved()) {
+                        throw helper.assertionException("the Bailiff vanished before it had charged its teleport");
+                    }
+                    if (bailiff.position().subtract(chargedFrom[0]).horizontalDistance() > 0.01) {
+                        throw helper.assertionException("the Bailiff moved while it charged its teleport");
+                    }
+                })
+                .thenWaitUntil(() -> {
+                    if (!bailiff.isRemoved()) {
+                        throw helper.assertionException("the Bailiff is still here");
+                    }
+                })
+                .thenExecute(() -> {
+                    var dropped = helper.getLevel().getEntitiesOfClass(ItemEntity.class, around, item -> item.getItem().is(Items.DIAMOND));
+                    if (!dropped.isEmpty()) {
+                        throw helper.assertionException("the Bailiff left " + dropped.size() + " stacks of diamonds behind");
+                    }
+                })
+                .thenSucceed();
     }
 }

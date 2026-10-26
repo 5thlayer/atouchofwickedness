@@ -39,6 +39,13 @@ public final class BailiffRenderer extends MobRenderer<Bailiff, VillagerRenderSt
     }
 
     @Override
+    public void extractRenderState(Bailiff bailiff, VillagerRenderState state, float partialTicks) {
+        super.extractRenderState(bailiff, state, partialTicks);
+        // The trader's head shake, as it refuses a trade, while the Bailiff taunts.
+        state.isUnhappy = bailiff.isTaunting();
+    }
+
+    @Override
     protected int getModelTint(VillagerRenderState state) {
         return TINT;
     }
