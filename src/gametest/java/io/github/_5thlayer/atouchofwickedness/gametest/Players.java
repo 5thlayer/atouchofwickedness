@@ -21,6 +21,7 @@ import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 
 /**
@@ -91,6 +92,21 @@ final class Players {
             }
         });
         return player;
+    }
+
+    /**
+     * Puts {@code stacks} in the first empty slots of the player's main inventory and hotbar, never
+     * the held one, so each is a stack a Bailiff's hit can take.
+     */
+    static void stock(ServerPlayer player, ItemStack... stacks) {
+        var inventory = player.getInventory();
+        int slot = 0;
+        for (var stack : stacks) {
+            while (slot == inventory.getSelectedSlot() || !inventory.getItem(slot).isEmpty()) {
+                slot++;
+            }
+            inventory.setItem(slot, stack);
+        }
     }
 
     /** Lets the player be hurt again at once, as the hurt cooldown a ticking player sheds would, and heals them. */

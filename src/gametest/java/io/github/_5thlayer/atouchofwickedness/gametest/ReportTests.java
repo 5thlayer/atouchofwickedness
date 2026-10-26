@@ -26,7 +26,7 @@ final class ReportTests {
 
     private static void namesItsPlayer(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        player.getInventory().setItem(1, new ItemStack(Items.EMERALD, 7));
+        Players.stock(player, new ItemStack(Items.EMERALD, 7));
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         Bailiffs.hit(helper, bailiff, player);
         var report = bailiff.report(helper.getLevel());

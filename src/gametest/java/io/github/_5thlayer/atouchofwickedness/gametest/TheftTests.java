@@ -82,10 +82,10 @@ final class TheftTests {
 
     private static void goesForItsPlayer(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        player.getInventory().setItem(1, new ItemStack(Items.EMERALD, 7));
+        Players.stock(player, new ItemStack(Items.EMERALD, 7));
         Bailiffs.comeFor(helper, BAILIFF, player);
         helper.succeedWhen(() -> {
-            if (!player.getInventory().getItem(1).isEmpty()) {
+            if (Bailiffs.stacksIn(player.getInventory()) != 0) {
                 throw helper.assertionException("the Bailiff has not taken the player's emeralds");
             }
         });

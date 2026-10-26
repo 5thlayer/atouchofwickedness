@@ -32,7 +32,7 @@ final class DropTests {
 
     private static void killedWithMobDropsOff(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        player.getInventory().setItem(1, new ItemStack(Items.LAPIS_LAZULI, 21));
+        Players.stock(player, new ItemStack(Items.LAPIS_LAZULI, 21));
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         Bailiffs.hit(helper, bailiff, player);
         var around = new AABB(bailiff.blockPosition()).inflate(4);
@@ -57,8 +57,7 @@ final class DropTests {
 
     private static void killed(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        player.getInventory().setItem(1, new ItemStack(Items.GOLD_INGOT, 9));
-        player.getInventory().setItem(2, new ItemStack(Items.REDSTONE, 33));
+        Players.stock(player, new ItemStack(Items.GOLD_INGOT, 9), new ItemStack(Items.REDSTONE, 33));
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         Bailiffs.hit(helper, bailiff, player);
         Bailiffs.hit(helper, bailiff, player);
