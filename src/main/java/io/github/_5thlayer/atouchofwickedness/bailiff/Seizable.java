@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import io.github._5thlayer.atouchofwickedness.ATouchOfWickedness;
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.mixin.CompoundContainerAccessor;
+import io.github._5thlayer.atouchofwickedness.strongbox.StrongboxBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
@@ -35,8 +36,9 @@ import org.jspecify.annotations.Nullable;
  * The containers a Bailiff may rob: those whose block entity is in {@link #TAG}, and only the ones
  * its player has opened (ADR 0003). Each player's most recent ones, by dimension and position, are
  * remembered on them as they open them, saved with the player and copied through death. An ender
- * chest is never remembered, since what it opens is the player's own and no block's, and a shulker
- * box never is, even one a datapack adds to the tag, since the player carries it off with what it holds.
+ * chest is never remembered, since what it opens is the player's own and no block's, and neither a
+ * shulker box nor a Strongbox ever is, even one a datapack adds to the tag: the player carries a
+ * shulker box off with what it holds, and a Strongbox is the one container the Bailiff cannot seize.
  */
 public final class Seizable {
 
@@ -72,6 +74,7 @@ public final class Seizable {
     /** @return whether {@code blockEntity} is a container the Bailiff may rob */
     public static boolean is(BlockEntity blockEntity) {
         return blockEntity instanceof Container && !(blockEntity instanceof ShulkerBoxBlockEntity)
+                && !(blockEntity instanceof StrongboxBlockEntity)
                 && blockEntity.getType().builtInRegistryHolder().is(TAG);
     }
 

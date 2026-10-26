@@ -1,5 +1,6 @@
 {
   "values": [
-    "minecraft:dispenser"
+    "minecraft:dispenser",
+    "atouchofwickedness:strongbox"
   ]
 }

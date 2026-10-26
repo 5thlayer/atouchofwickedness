@@ -2,6 +2,8 @@
   "itemGroup.atouchofwickedness": "A Touch of Wickedness",
   "item.atouchofwickedness.seal": "Seal",
   "item.atouchofwickedness.tally_stick": "Tally Stick",
+  "block.atouchofwickedness.strongbox": "Strongbox",
+  "container.atouchofwickedness.strongbox": "Strongbox",
   "entity.atouchofwickedness.bailiff": "Bailiff",
   "entity.atouchofwickedness.bailiff.taunt": "The Bailiff takes its due.",
   "entity.atouchofwickedness.bailiff.taunt_empty_handed": "Nothing? The Bailiff will return.",

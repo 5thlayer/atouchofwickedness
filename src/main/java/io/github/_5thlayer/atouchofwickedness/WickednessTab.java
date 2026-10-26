@@ -47,5 +47,6 @@ public final class WickednessTab {
     private static void displayItems(CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output) {
         output.accept(WickednessItems.SEAL.get());
         output.accept(WickednessItems.TALLY_STICK.get());
+        output.accept(WickednessItems.STRONGBOX.get());
     }
 }

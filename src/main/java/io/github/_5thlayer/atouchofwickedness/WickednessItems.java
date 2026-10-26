@@ -3,18 +3,23 @@
 
 package io.github._5thlayer.atouchofwickedness;
 
+import io.github._5thlayer.atouchofwickedness.strongbox.Strongbox;
 import io.github._5thlayer.atouchofwickedness.wickedness.TallyStick;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** The Pillar's items: the Seal a killed Bailiff leaves, and the Tally Stick crafted from one. */
+/**
+ * The Pillar's items: the Seal a killed Bailiff leaves, the Tally Stick crafted from one, and the
+ * Strongbox crafted from four.
+ */
 public final class WickednessItems {
 
     /** What repairs a Tally Stick in an anvil: a Seal. */
@@ -27,6 +32,8 @@ public final class WickednessItems {
 
     public static final DeferredItem<TallyStick> TALLY_STICK = ITEMS.registerItem("tally_stick", TallyStick::new,
             properties -> properties.durability(WickednessConfig.tallyStickUses()).repairable(REPAIRS_TALLY_STICK));
+
+    public static final DeferredItem<BlockItem> STRONGBOX = ITEMS.registerSimpleBlockItem("strongbox", Strongbox.BLOCK);
 
     private WickednessItems() {
     }
