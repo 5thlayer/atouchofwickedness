@@ -11,7 +11,10 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
-/** The Pillar's client entry point: it draws the Bailiff ({@link BailiffRenderer}) and the Strongbox ({@link StrongboxRenderer}). */
+/**
+ * The Pillar's client entry point: it draws the Bailiff ({@link BailiffRenderer}) and the Strongbox
+ * ({@link StrongboxRenderer}).
+ */
 @Mod(value = ATouchOfWickedness.MOD_ID, dist = Dist.CLIENT)
 public final class ATouchOfWickednessClient {
 

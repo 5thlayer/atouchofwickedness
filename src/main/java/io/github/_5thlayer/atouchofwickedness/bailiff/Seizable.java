@@ -38,7 +38,7 @@ import org.jspecify.annotations.Nullable;
  * remembered on them as they open them, saved with the player and copied through death. An ender
  * chest is never remembered, since what it opens is the player's own and no block's, and neither a
  * shulker box nor a Strongbox ever is, even one a datapack adds to the tag: the player carries a
- * shulker box off with what it holds, and a Strongbox is the one container the Bailiff cannot seize.
+ * shulker box off with what it holds, and a Strongbox is made so the Bailiff cannot seize it.
  */
 public final class Seizable {
 

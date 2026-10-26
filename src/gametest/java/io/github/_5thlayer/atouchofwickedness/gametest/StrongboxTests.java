@@ -88,7 +88,7 @@ final class StrongboxTests {
                 throw helper.assertionException("the Bailiff robbed a Strongbox");
             }
         });
-        // A container it robbed it robs before it goes for its player.
+        // It robs a Seizable container before it mugs its player, so a mugging means it passed the Strongbox by.
         helper.succeedWhen(() -> {
             if (Bailiffs.stacksIn(player.getInventory()) != 0) {
                 throw helper.assertionException("the Bailiff has not taken the player's stack");
