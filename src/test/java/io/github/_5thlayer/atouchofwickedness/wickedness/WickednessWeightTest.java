@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * A creature weighs its entry in the data map, and nothing when it has none; a tamed one weighs the
- * tamed weight, a baby the baby multiple, and one that was going for its killer nothing. Each hit on
- * a creature weighing the torment weight or more costs the hit cost.
+ * tamed weight, a baby the baby multiple, and one its killer killed in self-defence nothing. Each hit
+ * on a creature weighing the torment weight or more costs the hit cost.
  */
 class WickednessWeightTest {
 
@@ -25,7 +25,7 @@ class WickednessWeightTest {
     private static final Victim WILD = new Victim(false, false, false);
     private static final Victim TAMED = new Victim(true, false, false);
     private static final Victim BABY = new Victim(false, true, false);
-    private static final Victim DEFENDING = new Victim(false, false, true);
+    private static final Victim SELF_DEFENCE = new Victim(false, false, true);
 
     @Test
     void aListedCreatureWeighsItsEntry() {
@@ -65,8 +65,8 @@ class WickednessWeightTest {
     }
 
     @Test
-    void aCreatureGoingForItsKillerWeighsNothing() {
-        assertEquals(0, WickednessWeight.effective(15, DEFENDING, RULES));
+    void aCreatureItsKillerDefendedThemselvesAgainstWeighsNothing() {
+        assertEquals(0, WickednessWeight.effective(15, SELF_DEFENCE, RULES));
         assertEquals(0, WickednessWeight.effective(15, new Victim(true, true, true), RULES));
     }
 

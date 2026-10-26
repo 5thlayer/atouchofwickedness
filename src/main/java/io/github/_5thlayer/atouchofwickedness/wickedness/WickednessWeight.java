@@ -32,9 +32,10 @@ public final class WickednessWeight {
      *
      * @param tamed           whether it is tamed, by anyone
      * @param baby            whether it is a baby
-     * @param goingForKiller  whether it is a neutral mob whose target was the player it is weighed against
+     * @param selfDefence     whether it is a neutral mob that went for the player it is weighed against
+     *                        before that player struck it
      */
-    public record Victim(boolean tamed, boolean baby, boolean goingForKiller) {
+    public record Victim(boolean tamed, boolean baby, boolean selfDefence) {
     }
 
     /** @return the weight of a creature whose data-map entry is {@code entry}, null when it has none */
@@ -44,7 +45,7 @@ public final class WickednessWeight {
 
     /** @return what a creature of base weight {@code base} weighs, once the rules are applied to {@code victim} */
     public static int effective(int base, Victim victim, Rules rules) {
-        if (victim.goingForKiller()) {
+        if (victim.selfDefence()) {
             return 0;
         }
         int weight = victim.tamed() ? rules.tamedWeight() : base;

@@ -20,8 +20,8 @@ import net.minecraft.world.level.GameType;
  * Fair blame: a kill is credited to the player vanilla credits it to, the one who last hurt the
  * creature within its memory of them, or the owner of the tamed pet that did, and to no one when no
  * player had a hand in it. On top of the data map, a tamed creature weighs 50 whoever owns it, a baby
- * double, and a neutral mob going for its killer nothing; each damaging hit on a creature weighing 30
- * or more adds 3. A Creative player gains nothing and is never visited, and dying changes nothing.
+ * double, and a neutral mob going for its killer nothing, unless the killer struck it before it went
+ * for them; each damaging hit short of the killing blow on a creature weighing 30 or more adds 3. A Creative player gains nothing and is never visited, and dying changes nothing.
  */
 final class BlameTests {
 
@@ -39,10 +39,14 @@ final class BlameTests {
         tests.test("blame_baby_cow_adds_4", 20, BlameTests::baby);
         tests.test("blame_tamed_wolf_of_another_player_adds_50", 20, BlameTests::tamed);
         tests.test("blame_wolf_going_for_the_player_adds_nothing", 20, BlameTests::selfDefence);
+        tests.test("blame_tamed_wolf_going_for_the_player_adds_nothing", 20, BlameTests::tamedSelfDefence);
+        tests.test("blame_wolf_the_player_struck_first_still_adds_15", 20, BlameTests::provokedWolf);
+        tests.test("blame_tamed_wolf_the_player_struck_first_adds_50_and_3_a_hit", 20, BlameTests::provokedTamedWolf);
         tests.test("blame_iron_golem_going_for_the_player_still_adds_15", 20, BlameTests::provokedGolem);
         tests.test("blame_each_hit_on_a_villager_adds_3", 20, BlameTests::hitsOnAVillager);
         tests.test("blame_a_hit_on_a_cow_adds_nothing", 20, BlameTests::hitOnACow);
         tests.test("blame_creative_player_gains_nothing_and_is_never_visited", 20, BlameTests::creative);
+        tests.test("blame_spectator_gains_nothing", 20, BlameTests::spectator);
         tests.test("blame_death_leaves_wickedness_unchanged", 20, BlameTests::death);
     }
 
@@ -74,8 +78,7 @@ final class BlameTests {
     private static void trapped(GameTestHelper helper) {
         var player = wicked(helper);
         var cow = helper.spawnWithNoFreeWill(EntityType.COW, CREATURE);
-        cow.hurtServer(helper.getLevel(), player.damageSources().playerAttack(player), 1);
-        cow.invulnerableTime = 0;
+        hit(helper, player, cow);
         kill(helper, cow, helper.getLevel().damageSources().lava());
         assertWickedness(helper, player, 2, "a cow the player hurt that then died in lava");
         helper.succeed();
@@ -114,8 +117,46 @@ final class BlameTests {
         var player = wicked(helper);
         var wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, CREATURE);
         wolf.setTarget(player);
+        // Hits while it goes for the player are self-defence too, not striking first.
+        hit(helper, player, wolf);
         WickedKillTests.killInMelee(helper, player, wolf);
         assertWickedness(helper, player, 0, "a wolf going for the player killed in melee");
+        helper.succeed();
+    }
+
+    private static void tamedSelfDefence(GameTestHelper helper) {
+        var player = wicked(helper);
+        var wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, CREATURE);
+        wolf.setTame(true, false);
+        wolf.setOwner(Players.join(helper, PLAYER.north()));
+        wolf.setTarget(player);
+        hit(helper, player, wolf);
+        WickedKillTests.killInMelee(helper, player, wolf);
+        assertWickedness(helper, player, 0, "another player's tamed wolf going for the player, hit and killed in melee");
+        helper.succeed();
+    }
+
+    private static void provokedWolf(GameTestHelper helper) {
+        var player = wicked(helper);
+        var wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, CREATURE);
+        hit(helper, player, wolf);
+        // As its hurt-by goal would on its next tick.
+        wolf.setTarget(player);
+        WickedKillTests.killInMelee(helper, player, wolf);
+        assertWickedness(helper, player, 15, "a wolf the player struck before it went for them, killed in melee");
+        helper.succeed();
+    }
+
+    private static void provokedTamedWolf(GameTestHelper helper) {
+        var player = wicked(helper);
+        var wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, CREATURE);
+        wolf.setTame(true, false);
+        wolf.setOwner(Players.join(helper, PLAYER.north()));
+        hit(helper, player, wolf);
+        wolf.setTarget(player);
+        hit(helper, player, wolf);
+        WickedKillTests.killInMelee(helper, player, wolf);
+        assertWickedness(helper, player, 56, "another player's tamed wolf struck first, hit again as it went for the player and killed");
         helper.succeed();
     }
 
@@ -132,11 +173,10 @@ final class BlameTests {
         var player = wicked(helper);
         var villager = helper.spawnWithNoFreeWill(EntityType.VILLAGER, CREATURE);
         for (int i = 0; i < 3; i++) {
-            villager.invulnerableTime = 0;
-            villager.hurtServer(helper.getLevel(), player.damageSources().playerAttack(player), 1);
+            hit(helper, player, villager);
         }
         assertWickedness(helper, player, 9, "three hits on a villager");
-        // A hit the villager shrugs off does no harm, so it costs nothing.
+        // A hit the villager shrugs off, still hurt from the last, does no harm, so it costs nothing.
         villager.hurtServer(helper.getLevel(), player.damageSources().playerAttack(player), 1);
         assertWickedness(helper, player, 9, "a hit while the villager was still invulnerable");
         helper.succeed();
@@ -144,7 +184,7 @@ final class BlameTests {
 
     private static void hitOnACow(GameTestHelper helper) {
         var player = wicked(helper);
-        helper.spawnWithNoFreeWill(EntityType.COW, CREATURE).hurtServer(helper.getLevel(), player.damageSources().playerAttack(player), 1);
+        hit(helper, player, helper.spawnWithNoFreeWill(EntityType.COW, CREATURE));
         assertWickedness(helper, player, 0, "a hit on a cow");
         helper.succeed();
     }
@@ -154,13 +194,22 @@ final class BlameTests {
         player.setGameMode(GameType.CREATIVE);
         Wickedness.setThreshold(player, 50);
         WickedKillTests.killInMelee(helper, player, helper.spawnWithNoFreeWill(EntityType.CAT, CREATURE));
-        helper.spawnWithNoFreeWill(EntityType.VILLAGER, CREATURE).hurtServer(helper.getLevel(), player.damageSources().playerAttack(player), 1);
+        hit(helper, player, helper.spawnWithNoFreeWill(EntityType.VILLAGER, CREATURE));
         assertWickedness(helper, player, 0, "a Creative player killing a cat and hitting a villager");
         Wickedness.set(player, 60);
         if (!Bailiffs.of(player).isEmpty()) {
             helper.fail("a Bailiff came for a Creative player past their Threshold");
             return;
         }
+        helper.succeed();
+    }
+
+    private static void spectator(GameTestHelper helper) {
+        var player = wicked(helper);
+        player.setGameMode(GameType.SPECTATOR);
+        WickedKillTests.killInMelee(helper, player, helper.spawnWithNoFreeWill(EntityType.CAT, CREATURE));
+        hit(helper, player, helper.spawnWithNoFreeWill(EntityType.VILLAGER, CREATURE));
+        assertWickedness(helper, player, 0, "a Spectator killing a cat and hitting a villager");
         helper.succeed();
     }
 
@@ -183,6 +232,12 @@ final class BlameTests {
         var player = Players.join(helper, PLAYER);
         Wickedness.setThreshold(player, 1_000);
         return player;
+    }
+
+    /** {@code player} lands a light blow on {@code creature}, which could be hurt again at once. */
+    private static void hit(GameTestHelper helper, ServerPlayer player, LivingEntity creature) {
+        creature.invulnerableTime = 0;
+        creature.hurtServer(helper.getLevel(), player.damageSources().playerAttack(player), 1);
     }
 
     private static void kill(GameTestHelper helper, LivingEntity creature, DamageSource source) {
