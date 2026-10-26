@@ -98,15 +98,15 @@ public final class WickedKills {
 
     private static void onHit(LivingDamageEvent.Post event) {
         var creature = event.getEntity();
-        // The killing blow is the kill's, not a hit's: a quick kill adds the weight alone.
-        if (event.getHealthDamage() <= 0 || creature.isDeadOrDying()
-                || !(event.getSource().getEntity() instanceof ServerPlayer player) || player == creature) {
+        if (!(event.getSource().getEntity() instanceof ServerPlayer player) || player == creature) {
             return;
         }
-        if (creature instanceof NeutralMob && creature instanceof Mob mob && mob.getTarget() != player) {
+        // Any hurt angers a neutral mob, a snowball or a blow its armour takes included, so any marks it.
+        if (fightsBack(creature) && !goingFor(creature, player)) {
             struckFirst(creature, player);
         }
-        if (!Wickedness.counts(player)) {
+        // The killing blow is the kill's, not a hit's: a quick kill adds the weight alone.
+        if (event.getHealthDamage() <= 0 || creature.isDeadOrDying() || !Wickedness.counts(player)) {
             return;
         }
         int cost = WickednessWeight.hitCost(effectiveWeightOf(creature, player), WickednessConfig.weightRules());
@@ -129,9 +129,16 @@ public final class WickedKills {
      * for what the player did.
      */
     private static boolean selfDefence(LivingEntity creature, ServerPlayer player) {
-        return creature instanceof NeutralMob && !(creature instanceof IronGolem)
-                && creature instanceof Mob mob && mob.getTarget() == player
-                && !creature.getData(STRUCK_FIRST_BY).contains(player.getUUID());
+        return fightsBack(creature) && goingFor(creature, player) && !creature.getData(STRUCK_FIRST_BY).contains(player.getUUID());
+    }
+
+    /** @return whether killing {@code creature} can be self-defence: a neutral mob, not an iron golem */
+    private static boolean fightsBack(LivingEntity creature) {
+        return creature instanceof NeutralMob && !(creature instanceof IronGolem);
+    }
+
+    private static boolean goingFor(LivingEntity creature, ServerPlayer player) {
+        return creature instanceof Mob mob && mob.getTarget() == player;
     }
 
     private static void struckFirst(LivingEntity creature, ServerPlayer player) {

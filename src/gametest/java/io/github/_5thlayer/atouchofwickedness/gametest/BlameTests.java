@@ -12,6 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -21,7 +22,8 @@ import net.minecraft.world.level.GameType;
  * creature within its memory of them, or the owner of the tamed pet that did, and to no one when no
  * player had a hand in it. On top of the data map, a tamed creature weighs 50 whoever owns it, a baby
  * double, and a neutral mob going for its killer nothing, unless the killer struck it before it went
- * for them; each damaging hit short of the killing blow on a creature weighing 30 or more adds 3. A Creative player gains nothing and is never visited, and dying changes nothing.
+ * for them; each damaging hit short of the killing blow on a creature weighing 30 or more adds 3. A
+ * Creative or Spectator player gains nothing and is never visited, and dying changes nothing.
  */
 final class BlameTests {
 
@@ -42,6 +44,7 @@ final class BlameTests {
         tests.test("blame_tamed_wolf_going_for_the_player_adds_nothing", 20, BlameTests::tamedSelfDefence);
         tests.test("blame_wolf_the_player_struck_first_still_adds_15", 20, BlameTests::provokedWolf);
         tests.test("blame_tamed_wolf_the_player_struck_first_adds_50_and_3_a_hit", 20, BlameTests::provokedTamedWolf);
+        tests.test("blame_wolf_the_player_struck_first_with_a_snowball_still_adds_15", 20, BlameTests::snowballedWolf);
         tests.test("blame_iron_golem_going_for_the_player_still_adds_15", 20, BlameTests::provokedGolem);
         tests.test("blame_each_hit_on_a_villager_adds_3", 20, BlameTests::hitsOnAVillager);
         tests.test("blame_a_hit_on_a_cow_adds_nothing", 20, BlameTests::hitOnACow);
@@ -144,6 +147,18 @@ final class BlameTests {
         wolf.setTarget(player);
         WickedKillTests.killInMelee(helper, player, wolf);
         assertWickedness(helper, player, 15, "a wolf the player struck before it went for them, killed in melee");
+        helper.succeed();
+    }
+
+    private static void snowballedWolf(GameTestHelper helper) {
+        var player = wicked(helper);
+        var wolf = helper.spawnWithNoFreeWill(EntityType.WOLF, CREATURE);
+        // A snowball hurts a wolf for nothing, but angers it all the same.
+        var snowball = new Snowball(helper.getLevel(), player, new ItemStack(Items.SNOWBALL));
+        wolf.hurtServer(helper.getLevel(), helper.getLevel().damageSources().thrown(snowball, player), 0);
+        wolf.setTarget(player);
+        WickedKillTests.killInMelee(helper, player, wolf);
+        assertWickedness(helper, player, 15, "a wolf the player struck first with a snowball, killed in melee");
         helper.succeed();
     }
 
