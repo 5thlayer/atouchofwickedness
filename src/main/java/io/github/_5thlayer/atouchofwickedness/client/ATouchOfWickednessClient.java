@@ -10,10 +10,11 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 
 /**
- * The Pillar's client entry point: it draws the Bailiff ({@link BailiffRenderer}) and the Strongbox
- * ({@link StrongboxRenderer}).
+ * The Pillar's client entry point: it draws the Bailiff ({@link BailiffRenderer}), the Zs it sleeps
+ * under ({@link SnoreParticle}) and the Strongbox ({@link StrongboxRenderer}).
  */
 @Mod(value = ATouchOfWickedness.MOD_ID, dist = Dist.CLIENT)
 public final class ATouchOfWickednessClient {
@@ -23,5 +24,7 @@ public final class ATouchOfWickednessClient {
             event.registerEntityRenderer(BailiffContent.BAILIFF.get(), BailiffRenderer::new);
             event.registerBlockEntityRenderer(Strongbox.BLOCK_ENTITY.get(), StrongboxRenderer::new);
         });
+        modBus.addListener((RegisterParticleProvidersEvent event) ->
+                event.registerSpriteSet(BailiffContent.SNORE.get(), SnoreParticle.Provider::new));
     }
 }

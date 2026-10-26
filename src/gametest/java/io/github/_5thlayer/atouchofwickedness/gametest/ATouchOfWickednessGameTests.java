@@ -50,6 +50,10 @@ public final class ATouchOfWickednessGameTests {
     @SubscribeEvent
     static void construct(FMLConstructModEvent event) {
         register(event.getContainer().getEventBus());
+        // The dev client loads this source set too, and keeps the day's own nights.
+        if ("gameTestServer".equals(System.getProperty("libworks.run"))) {
+            Nights.install();
+        }
     }
 
     public static void register(IEventBus modBus) {
@@ -81,6 +85,7 @@ public final class ATouchOfWickednessGameTests {
         WayBackTests.register(tests);
         ReportTests.register(tests);
         WarningTests.register(tests);
+        SleepTests.register(tests);
     }
 
     private static Identifier id(String path) {

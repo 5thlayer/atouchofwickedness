@@ -4,6 +4,8 @@
 package io.github._5thlayer.atouchofwickedness.bailiff;
 
 import io.github._5thlayer.atouchofwickedness.ATouchOfWickedness;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
@@ -14,11 +16,12 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** The Bailiff, as a creature, and its sounds: its arrival, its taunt and its teleport away. */
+/** The Bailiff, as a creature, its sounds, its arrival, its taunt and its teleport away, and the Zs it sleeps under. */
 public final class BailiffContent {
 
     private static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(ATouchOfWickedness.MOD_ID);
     private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, ATouchOfWickedness.MOD_ID);
+    private static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, ATouchOfWickedness.MOD_ID);
 
     /** A wandering trader's size. Never saved: a visit ends with the server at the latest. */
     public static final DeferredHolder<EntityType<?>, EntityType<Bailiff>> BAILIFF = ENTITIES.registerEntityType("bailiff",
@@ -36,6 +39,9 @@ public final class BailiffContent {
     /** The Bailiff teleporting away with what it carries, an enderman's woosh; its subtitle reads "Bailiff vanishes". */
     public static final DeferredHolder<SoundEvent, SoundEvent> VANISHES = sound("entity.bailiff.vanishes");
 
+    /** A "Z" rising from a sleeping Bailiff. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SNORE = PARTICLES.register("snore", () -> new SimpleParticleType(false));
+
     private BailiffContent() {
     }
 
@@ -46,6 +52,7 @@ public final class BailiffContent {
     public static void register(IEventBus modBus) {
         ENTITIES.register(modBus);
         SOUNDS.register(modBus);
+        PARTICLES.register(modBus);
         modBus.addListener((EntityAttributeCreationEvent event) -> event.put(BAILIFF.get(), Bailiff.createAttributes().build()));
     }
 }

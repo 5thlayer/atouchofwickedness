@@ -9,7 +9,9 @@ import net.minecraft.client.model.npc.VillagerModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.state.VillagerRenderState;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Pose;
 
 /**
  * Draws the Bailiff on vanilla's wandering-trader model, its skin retinted a deep crimson (ADR 0004):
@@ -43,6 +45,14 @@ public final class BailiffRenderer extends MobRenderer<Bailiff, VillagerRenderSt
         super.extractRenderState(bailiff, state, partialTicks);
         // The trader's head shake, as it refuses a trade, while the Bailiff taunts.
         state.isUnhappy = bailiff.isTaunting();
+        if (bailiff.isAsleep()) {
+            // Lying as a villager does in bed, the way it faced, its head still.
+            state.pose = Pose.SLEEPING;
+            state.bedOrientation = Direction.fromYRot(state.bodyRot);
+            state.eyeHeight = bailiff.getEyeHeight(Pose.STANDING);
+            state.yRot = 0;
+            state.xRot = 0;
+        }
     }
 
     @Override
