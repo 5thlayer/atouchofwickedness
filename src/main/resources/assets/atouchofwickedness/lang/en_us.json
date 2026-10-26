@@ -9,5 +9,8 @@
   "atouchofwickedness.standing.overdue": "Your tally reads: Overdue",
   "atouchofwickedness.standing.forfeit": "Your tally reads: Forfeit",
   "commands.atouchofwickedness.wickedness": "%s has %s Wickedness",
-  "commands.atouchofwickedness.threshold": "%s's Threshold is %s"
+  "commands.atouchofwickedness.threshold": "%s's Threshold is %s",
+  "atouchofwickedness.jade.came_for": "Came for %s",
+  "atouchofwickedness.jade.carries": "Carries",
+  "config.jade.plugin_atouchofwickedness.bailiff": "Bailiff's player and what it carries"
 }

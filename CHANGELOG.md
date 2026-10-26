@@ -15,5 +15,6 @@ Written for Consumers: what a mod building against A Touch of Wickedness can use
 - A Seal and a stick craft a Tally Stick, which shows the player's Standing (Clean, Marked, Overdue or Forfeit) in the action bar, wears 1 of 16 uses each time, and repairs with a Seal in an anvil.
 - `/wickedness get|set|add <player> [value]` and `/wickedness threshold <player>`, at permission level 2.
 - Every number of the loop is in the common config, `atouchofwickedness-common.toml`.
+- With Jade installed, looking at a Bailiff shows the player it came for and the stacks it has taken, and nothing of anyone's Wickedness. Jade is optional, and the Pillar plays without it (#13).
 
 - The Pillar has its own creative tab, "A Touch of Wickedness", and no longer nests `libworks-runtime` or fills its Works tab.

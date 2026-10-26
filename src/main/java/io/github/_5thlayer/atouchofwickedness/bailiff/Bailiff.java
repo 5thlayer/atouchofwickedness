@@ -87,6 +87,12 @@ public final class Bailiff extends PathfinderMob {
         return target.getUUID().equals(player);
     }
 
+    /** @return what the Bailiff shows a viewer, or null once its player has gone */
+    public @Nullable BailiffReport report(ServerLevel level) {
+        var target = target(level);
+        return target == null ? null : new BailiffReport(target.getDisplayName(), stolen.stream().map(ItemStack::copy).toList());
+    }
+
     /** @return whether the Bailiff is done and running off with what it took */
     public boolean isFleeing() {
         return fleeing;
