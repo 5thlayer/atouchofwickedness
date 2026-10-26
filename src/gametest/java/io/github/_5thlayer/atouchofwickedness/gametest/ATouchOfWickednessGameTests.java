@@ -64,6 +64,7 @@ public final class ATouchOfWickednessGameTests {
         LoadTests.register(tests);
         CreativeTabTests.register(tests);
         WickedKillTests.register(tests);
+        BlameTests.register(tests);
         ThresholdTests.register(tests);
         ArrivalTests.register(tests);
         TheftTests.register(tests);

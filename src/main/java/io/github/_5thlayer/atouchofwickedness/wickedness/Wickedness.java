@@ -22,7 +22,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * A player's Wickedness, which the player never sees as a number (ADR 0002), and their Threshold,
  * drawn at random when they first join and again after each visit. When Wickedness reaches the
  * Threshold, a Bailiff comes for the player ({@link Arrival}): Wickedness drops to 0 and a new
- * Threshold is drawn as it arrives.
+ * Threshold is drawn as it arrives. Both are copied through death, so dying changes neither.
  */
 public final class Wickedness {
 
@@ -65,12 +65,20 @@ public final class Wickedness {
         set(player, (int) Math.clamp((long) of(player) + amount, 0, Integer.MAX_VALUE));
     }
 
-    /** Sets the player's Wickedness to {@code value}, never below 0, and sends the Bailiff once it reaches the Threshold. */
+    /** @return whether the player's deeds count: not in Creative or Spectator, who gain nothing and are never visited */
+    public static boolean counts(ServerPlayer player) {
+        return !player.isCreative() && !player.isSpectator();
+    }
+
+    /**
+     * Sets the player's Wickedness to {@code value}, never below 0, and sends the Bailiff once it
+     * reaches the Threshold, unless the player is in Creative or Spectator.
+     */
     public static void set(ServerPlayer player, int value) {
         var tally = player.getData(TALLY);
         tally.wickedness = Math.max(0, value);
         player.setData(TALLY, tally);
-        if (tally.wickedness >= tally.threshold && Arrival.arrive(player)) {
+        if (tally.wickedness >= tally.threshold && counts(player) && Arrival.arrive(player)) {
             tally.wickedness = 0;
             tally.threshold = draw(player.getRandom());
         }

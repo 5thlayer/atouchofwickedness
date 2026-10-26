@@ -83,7 +83,11 @@ final class Players {
             }
 
             private void leave() {
-                server.getPlayerList().remove(player);
+                // Whoever the player is now: respawning replaces them with a new one.
+                var current = server.getPlayerList().getPlayer(profile.id());
+                if (current != null) {
+                    server.getPlayerList().remove(current);
+                }
             }
         });
         return player;

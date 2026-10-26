@@ -4,6 +4,7 @@
 package io.github._5thlayer.atouchofwickedness;
 
 import io.github._5thlayer.atouchofwickedness.wickedness.Standing;
+import io.github._5thlayer.atouchofwickedness.wickedness.WickednessWeight;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -15,6 +16,10 @@ public final class WickednessConfig {
 
     static final ModConfigSpec SPEC;
 
+    private static final ModConfigSpec.IntValue TAMED_WEIGHT;
+    private static final ModConfigSpec.DoubleValue BABY_MULTIPLIER;
+    private static final ModConfigSpec.IntValue TORMENT_WEIGHT;
+    private static final ModConfigSpec.IntValue HIT_COST;
     private static final ModConfigSpec.IntValue THRESHOLD_MIN;
     private static final ModConfigSpec.IntValue THRESHOLD_MAX;
     private static final ModConfigSpec.DoubleValue MARKED;
@@ -36,6 +41,22 @@ public final class WickednessConfig {
 
     static {
         var builder = new ModConfigSpec.Builder();
+        builder.push("weights");
+        TAMED_WEIGHT = builder
+                .comment("What killing any tamed creature adds, whoever owns it and whatever its own weight.")
+                .defineInRange("tamed", 50, 0, 1_000_000);
+        BABY_MULTIPLIER = builder
+                .comment("How many times its weight killing a baby adds, rounded to the nearest whole number.")
+                .defineInRange("babyMultiplier", 2.0, 0, 100);
+        TORMENT_WEIGHT = builder
+                .comment("The weight from which each damaging hit a player lands on a creature adds the hit cost:",
+                        "a villager, a tamed pet, a cat or an ocelot by default.")
+                .defineInRange("tormentWeight", 30, 0, 1_000_000);
+        HIT_COST = builder
+                .comment("What each damaging hit on a creature weighing the torment weight or more adds, short of the killing blow.")
+                .defineInRange("hitCost", 3, 0, 1_000_000);
+        builder.pop();
+
         builder.push("threshold");
         THRESHOLD_MIN = builder
                 .comment("The lowest Threshold a player can draw: the Wickedness at which the Bailiff comes. It is drawn",
@@ -106,6 +127,10 @@ public final class WickednessConfig {
     }
 
     private WickednessConfig() {
+    }
+
+    public static WickednessWeight.Rules weightRules() {
+        return new WickednessWeight.Rules(TAMED_WEIGHT.getAsInt(), BABY_MULTIPLIER.getAsDouble(), TORMENT_WEIGHT.getAsInt(), HIT_COST.getAsInt());
     }
 
     public static int thresholdMin() {
