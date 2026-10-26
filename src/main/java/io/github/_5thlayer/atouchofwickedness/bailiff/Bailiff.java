@@ -101,7 +101,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     }
 
     /** Tells whether it is night where a Bailiff stands: the day's timeline, unless a run sets its own. */
-    private static Predicate<Bailiff> night = Bailiff::isNightByTheDay;
+    private static Predicate<Bailiff> night = Bailiff::isNightByTheTimeline;
 
     private @Nullable UUID player;
     private Phase phase = Phase.MUGGING;
@@ -220,14 +220,15 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
      * @return whether it is night where the Bailiff stands, as the day's timeline has it, whatever the
      *         weather: outside the hours undead burn in by day, so a storm by day is no night
      */
-    private boolean isNightByTheDay() {
+    private boolean isNightByTheTimeline() {
         return !level().dimensionType().hasFixedTime()
                 && !level().environmentAttributes().getValue(EnvironmentAttributes.MONSTERS_BURN, position());
     }
 
     /**
      * Has {@code night} tell whether it is night where a Bailiff stands, in place of the day's
-     * timeline, for a run that sets its own nights rather than read the world's one clock.
+     * timeline, for a run that sets its own nights rather than read the world's one clock. Set once,
+     * as the mod is built, before any Bailiff arrives.
      */
     public static void tellNightBy(Predicate<Bailiff> night) {
         Bailiff.night = night;

@@ -3,6 +3,7 @@
 
 package io.github._5thlayer.atouchofwickedness.gametest;
 
+import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.bailiff.Bailiff;
 import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
 import net.minecraft.core.BlockPos;
@@ -91,7 +92,7 @@ final class SleepTests {
         var bailiff = comeForAtNight(helper, player);
         long[] woke = new long[1];
         helper.startSequence()
-                // Long enough asleep that a clock counting from its arrival would run out first.
+                // Asleep long enough that a clock counting from its arrival would flee 100 ticks early.
                 .thenIdle(ASLEEP_FOR)
                 .thenExecute(() -> {
                     hit(helper, bailiff, player, 1);
@@ -104,8 +105,9 @@ final class SleepTests {
                 })
                 .thenExecute(() -> {
                     long onSite = helper.getTick() - woke[0];
-                    if (onSite < 1_195 || onSite > 1_205) {
-                        throw helper.assertionException("the Bailiff fled " + onSite + " ticks after it woke, not 60 seconds");
+                    if (Math.abs(onSite - WickednessConfig.ticksOnSite()) > 5) {
+                        throw helper.assertionException("the Bailiff fled " + onSite + " ticks after it woke, not its "
+                                + WickednessConfig.ticksOnSite() + " ticks on site");
                     }
                 })
                 .thenSucceed();
