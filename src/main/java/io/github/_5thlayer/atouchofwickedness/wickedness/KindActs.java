@@ -26,8 +26,9 @@ import org.jspecify.annotations.Nullable;
 /**
  * The kind acts that atone, each lowering Wickedness by its {@link Atonement} and credited to the
  * player who did it: breeding two animals, taming one, healing a hurt tamed pet they own by feeding
- * it, curing a zombie villager, and gifting a villager food, which it picks up where they threw it. Each listens last, so an act another mod cancels counts for
- * nothing; a player in Creative or Spectator atones for nothing, as their kills add nothing.
+ * it, curing a zombie villager, and gifting a villager food, which it picks up where they threw it.
+ * Each listens last, so an act another mod cancels counts for nothing; a player in Creative or
+ * Spectator atones for nothing, as their kills add nothing.
  */
 public final class KindActs {
 

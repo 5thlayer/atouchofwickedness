@@ -14,7 +14,7 @@ public final class Atonement {
     }
 
     /**
-     * What each Atonement lowers Wickedness by.
+     * What each Atonement lowers Wickedness by, and how many gifts count a day.
      *
      * @param breeding        breeding two animals
      * @param taming          taming an animal
