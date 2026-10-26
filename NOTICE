@@ -5,3 +5,18 @@ Each entry names the files, their author, where they came from and the licence t
 file listed here is NOT covered by the licence this repository states for its own work; its own
 licence governs it. Which licence covers which file is REUSE.toml's to say; this list is the
 credits for what was copied in.
+
+Strongbox
+---------
+
+Files:   data/art/chest_stone_tiny.png
+         src/main/resources/assets/atouchofwickedness/textures/entity/chest/strongbox.png
+Author:  Malcolm Riley
+Source:  https://github.com/malcolmriley/unused-textures
+         blocks/chest_stone_tiny.png, at commit 8b85ad732023174d9a9da74e6bf2272d6c0bef17. The file
+         under data/art/ is the unmodified copy. The Strongbox's chest sheet is built from it by
+         scripts/build-textures.py, which stretches the tiny chest's four faces onto vanilla's chest
+         model, darkens its top for the inside, paints the latch out of its front and gives the lock
+         a crimson Seal of its own.
+Licence: Creative Commons Attribution 4.0 International
+         https://creativecommons.org/licenses/by/4.0/
