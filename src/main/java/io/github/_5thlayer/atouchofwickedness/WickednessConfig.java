@@ -53,7 +53,6 @@ public final class WickednessConfig {
     private static final ModConfigSpec.DoubleValue BAILIFF_FLEE_SPEED;
     private static final ModConfigSpec.IntValue CONTAINERS_REMEMBERED;
     private static final ModConfigSpec.IntValue ROBBING_RADIUS;
-    private static final ModConfigSpec.IntValue QUOTA;
     private static final ModConfigSpec.IntValue SECONDS_ON_SITE;
     private static final ModConfigSpec.IntValue VANISH_DISTANCE;
     private static final ModConfigSpec.IntValue SECONDS_TO_TELEPORT;
@@ -197,9 +196,6 @@ public final class WickednessConfig {
         ROBBING_RADIUS = builder
                 .comment("How near, in blocks, to where it arrived a remembered container must be for the Bailiff to rob it.")
                 .defineInRange("robbingRadius", 32, 0, 128);
-        QUOTA = builder
-                .comment("How many stacks a Bailiff takes from its player, when it found nothing to rob in their containers, before it flees.")
-                .defineInRange("quota", 5, 1, 64);
         SECONDS_ON_SITE = builder
                 .comment("How many seconds after it arrives a Bailiff flees, whatever it has taken.")
                 .defineInRange("secondsOnSite", 60, 1, 3600);
@@ -311,10 +307,6 @@ public final class WickednessConfig {
 
     public static int robbingRadius() {
         return ROBBING_RADIUS.getAsInt();
-    }
-
-    public static int quota() {
-        return QUOTA.getAsInt();
     }
 
     public static int ticksOnSite() {

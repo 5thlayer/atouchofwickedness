@@ -57,15 +57,13 @@ final class DropTests {
 
     private static void killed(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        Players.stock(player, new ItemStack(Items.GOLD_INGOT, 9), new ItemStack(Items.REDSTONE, 33));
+        Players.stock(player, new ItemStack(Items.GOLD_INGOT, 9));
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
-        Bailiffs.hit(helper, bailiff, player);
         Bailiffs.hit(helper, bailiff, player);
         var around = new AABB(bailiff.blockPosition()).inflate(4);
         WickedKillTests.killInMelee(helper, player, bailiff);
-        if (count(helper, around, Items.GOLD_INGOT) != 9 || count(helper, around, Items.REDSTONE) != 33) {
-            helper.fail("the killed Bailiff dropped " + count(helper, around, Items.GOLD_INGOT) + " gold and "
-                    + count(helper, around, Items.REDSTONE) + " redstone, not the 9 and 33 it stole");
+        if (count(helper, around, Items.GOLD_INGOT) != 9) {
+            helper.fail("the killed Bailiff dropped " + count(helper, around, Items.GOLD_INGOT) + " gold, not the 9 it stole");
             return;
         }
         int seals = count(helper, around, WickednessItems.SEAL.get());

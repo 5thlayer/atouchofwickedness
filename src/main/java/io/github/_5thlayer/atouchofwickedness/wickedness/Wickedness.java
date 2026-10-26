@@ -23,7 +23,8 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * A player's Wickedness, which the player never sees as a number (ADR 0002), and their Threshold,
  * drawn at random when they first join and again after each visit. When Wickedness reaches the
  * Threshold, a Bailiff comes for the player ({@link Arrival}): Wickedness drops to 0 and a new
- * Threshold is drawn as it arrives. No other Bailiff comes for the player until the cooldown
+ * Threshold is drawn as it arrives, though one that leaves with nothing leaves the player owing
+ * ({@link #owe}). No other Bailiff comes for the player until the cooldown
  * after that arrival is over. While the player stays at or above their Threshold, as when a
  * Bailiff found no spot to arrive on or the cooldown still ran, a Bailiff tries again every second.
  * Wickedness and the Threshold are copied through death, so dying changes neither. As Wickedness
@@ -107,6 +108,14 @@ public final class Wickedness {
             tally.threshold = draw(player.getRandom());
             tally.arrivedAt = now;
         }
+    }
+
+    /**
+     * Leaves the player owing after a Bailiff that vanished with nothing: their Wickedness goes back
+     * up to their Threshold, at the least, so another comes once the cooldown after this one is over.
+     */
+    public static void owe(ServerPlayer player) {
+        set(player, Math.max(of(player), threshold(player)));
     }
 
     /** Lowers the player's Wickedness by an Atonement of {@code amount}, unless the player is in Creative or Spectator. */

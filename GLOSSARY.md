@@ -45,7 +45,7 @@ A sign, heard or seen in the world, that a player's Wickedness is nearing the Th
 _Avoid_: omen (vanilla's Bad Omen), alert
 
 **Bailiff**:
-The creature that comes for a player whose Wickedness has crossed the Threshold, to seize their goods rather than to kill them: a stack from a container the player has opened, or with none, stacks from the player.
+The creature that comes for a player whose Wickedness has crossed the Threshold, to seize their goods rather than to kill them: one stack, from a container the player has opened or else from the player; one that leaves with nothing leaves the player at their Threshold, owing.
 _Avoid_: Krampus (Klei's name), punisher, Jack-o'-lantern (a vanilla block)
 
 **Seizable**:

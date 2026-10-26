@@ -5,6 +5,7 @@ package io.github._5thlayer.atouchofwickedness.gametest;
 
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.bailiff.Bailiff;
+import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -14,7 +15,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * A Bailiff flees once it has taken 5 stacks, or 60 seconds after it arrived, and once far enough
+ * A Bailiff flees once it has taken a stack and taunted its player, or 60 seconds after it arrived, and once far enough
  * from its player it stands still charging its teleport, then vanishes with what it took, dropping
  * none of it.
  */
@@ -27,41 +28,34 @@ final class FleeTests {
     }
 
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
-        tests.test("flee_after_five_stacks", 20, FleeTests::afterFiveStacks);
+        tests.test("flee_after_one_stack_and_a_taunt", 200, FleeTests::afterOneStack);
         tests.test("flee_after_sixty_seconds", 1_260, FleeTests::afterSixtySeconds);
         tests.test("flee_far_from_its_player_it_charges_then_vanishes_with_its_goods", 200, FleeTests::vanishes);
     }
 
-    private static void afterFiveStacks(GameTestHelper helper) {
+    private static void afterOneStack(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        for (int count = 1; count <= 7; count++) {
-            Players.stock(player, new ItemStack(Items.COBBLESTONE, count));
-        }
+        Players.stock(player, new ItemStack(Items.COBBLESTONE, 1), new ItemStack(Items.COBBLESTONE, 2));
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
-        for (int hit = 1; hit <= 4; hit++) {
-            Bailiffs.hit(helper, bailiff, player);
-        }
-        if (bailiff.isFleeing()) {
-            helper.fail("the Bailiff fled after 4 stacks");
-            return;
-        }
         Bailiffs.hit(helper, bailiff, player);
-        if (!bailiff.isFleeing()) {
-            helper.fail("the Bailiff did not flee after 5 stacks");
+        if (bailiff.isFleeing()) {
+            helper.fail("the Bailiff fled before it taunted its player");
             return;
         }
-        // Fleeing, it takes nothing more.
-        bailiff.doHurtTarget(helper.getLevel(), player);
-        if (Bailiffs.stacksIn(player.getInventory()) != 2) {
-            helper.fail("the player has " + Bailiffs.stacksIn(player.getInventory()) + " stacks left, not 2");
-            return;
-        }
-        helper.succeed();
+        helper.succeedWhen(() -> {
+            if (!bailiff.isFleeing()) {
+                throw helper.assertionException("the Bailiff has not fled");
+            }
+            if (player.heard.stream().noneMatch(sound -> sound.getSound().is(BailiffContent.TAUNTS.getKey()))) {
+                throw helper.assertionException("the Bailiff fled without taunting its player");
+            }
+        });
     }
 
     private static void afterSixtySeconds(GameTestHelper helper) {
-        // Out of its reach in the air, so it takes nothing and its time runs out.
+        // Out of its reach in the air, so it never lands a hit and its time runs out.
         var player = Players.join(helper, PLAYER.above(12));
+        Players.stock(player, new ItemStack(Items.EMERALD, 7));
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         helper.runAtTickTime(1_190, () -> {
             if (bailiff.isFleeing()) {
@@ -84,9 +78,9 @@ final class FleeTests {
             Players.stock(player, new ItemStack(Items.DIAMOND, count));
         }
         Bailiff bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
-        for (int hit = 1; hit <= 5; hit++) {
-            Bailiffs.hit(helper, bailiff, player);
-        }
+        Bailiffs.hit(helper, bailiff, player);
+        // Hit as it turns to taunt, it flees at once.
+        player.attack(bailiff);
         var around = new AABB(bailiff.blockPosition()).inflate(64);
         Vec3[] chargedFrom = new Vec3[1];
         helper.startSequence()

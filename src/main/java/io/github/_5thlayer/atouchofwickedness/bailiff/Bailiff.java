@@ -12,6 +12,7 @@ import java.util.function.IntPredicate;
 
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.WickednessItems;
+import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -35,6 +36,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -50,14 +52,15 @@ import org.jspecify.annotations.Nullable;
  * robs the base: it walks to the nearest, opens it as a player would, lid and sound, and takes one
  * stack at random from it, or moves on to the next when it is empty (ADR 0003). That one stack is
  * its haul: it walks up to its player, shakes its head at them mocking, and flees. With nothing to
- * rob it mugs its player instead: it goes for them, and each of its hits that lands takes one stack
- * at random from their main inventory or hotbar, never the held item, their worn armour or off
- * hand, until it has its quota. A player who hits it as it robs or taunts sends it fleeing at once.
- * Once its time on site is up it flees whatever it has. Fleeing, it runs faster than a sprinting
- * player, and once far enough from them, or after a while however far it got, it stands still
- * charging a teleport, when its player can still kill it from afar, then vanishes with what it
- * carries. Killed, it drops everything it stole and a few Seals. It is never saved, so a visit
- * never outlasts the server.
+ * rob it mugs its player instead: it goes for them, and its first hit that lands takes one stack at
+ * random from their main inventory or hotbar, never the held item, their worn armour or off hand,
+ * and it goes to taunt them. A player with nothing it may take it taunts at once, empty-handed. A
+ * player who hits it as it robs or taunts sends it fleeing at once. Once its time on site is up it
+ * flees whatever it has. Fleeing, it runs faster than a sprinting player, and once far enough from
+ * them, or after a while however far it got, it stands still charging a teleport, when its player
+ * can still kill it from afar, then vanishes with what it carries; one that vanishes with nothing
+ * leaves its player owing ({@link Wickedness#owe}). Killed, it drops everything it stole and a few
+ * Seals. It is never saved, so a visit never outlasts the server.
  */
 public final class Bailiff extends PathfinderMob implements ContainerUser {
 
@@ -94,7 +97,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     /** The container it has open, or null. */
     private @Nullable BlockPos robbing;
     private final List<ItemStack> stolen = new ArrayList<>();
-    private final Quota quota = new Quota(WickednessConfig.quota());
     private int ticksOnSite;
     private int ticksFleeing;
     /** Ticks it has stood charging its teleport, or -1 before it starts. */
@@ -144,7 +146,13 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         Seizable.opened(target, target.level()).stream()
                 .filter(pos -> pos.distSqr(arrival) <= radius * radius)
                 .forEach(toRob::add);
-        phase = toRob.isEmpty() ? Phase.MUGGING : Phase.ROBBING;
+        if (!toRob.isEmpty()) {
+            phase = Phase.ROBBING;
+        } else if (!hasTakeable(target.getInventory())) {
+            phase = Phase.TAUNTING;
+        } else {
+            phase = Phase.MUGGING;
+        }
     }
 
     private void takeStats() {
@@ -209,12 +217,15 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             level.playSound(null, getX(), getY(), getZ(), BailiffContent.CHARGES.get(), SoundSource.HOSTILE, 2.0F, 1.0F);
         }
         if (isCharging()) {
-            charge(level);
+            charge(level, target);
         }
     }
 
-    /** Stands charging its teleport, and once charged vanishes with what it carries. */
-    private void charge(ServerLevel level) {
+    /**
+     * Stands charging its teleport, and once charged vanishes with what it carries, leaving the
+     * {@code target} owing when that is nothing.
+     */
+    private void charge(ServerLevel level, ServerPlayer target) {
         // Stock still, so its player can take aim.
         getNavigation().stop();
         getMoveControl().setWait();
@@ -225,6 +236,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         }
         level.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY() + 1, getZ(), 48, 0.3, 0.8, 0.3, 0.2);
         level.playSound(null, getX(), getY(), getZ(), BailiffContent.VANISHES.get(), SoundSource.HOSTILE, 2.0F, 1.0F);
+        if (stolen.isEmpty()) {
+            Wickedness.owe(target);
+        }
         discard();
     }
 
@@ -240,7 +254,10 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     public boolean doHurtTarget(ServerLevel level, Entity target) {
         boolean landed = super.doHurtTarget(level, target);
         if (landed && phase == Phase.MUGGING && target instanceof ServerPlayer hit && cameFor(hit)) {
+            // Whether or not it found a stack, it has had its go.
             steal(hit);
+            phase = Phase.TAUNTING;
+            setTarget(null);
         }
         return landed;
     }
@@ -258,17 +275,21 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
     /**
      * Takes one stack at random from the main inventory or hotbar, never the held item: the one in
-     * the selected slot as the hit lands, so the player keeps what they fight with. It flees once it
-     * has its quota.
+     * the selected slot as the hit lands, so the player keeps what they fight with.
      */
     private void steal(ServerPlayer target) {
         var inventory = target.getInventory();
-        if (take(inventory, inventory.getNonEquipmentItems().size(), slot -> slot == inventory.getSelectedSlot())) {
-            quota.take();
-            if (quota.isMet()) {
-                flee();
-            }
-        }
+        take(inventory, inventory.getNonEquipmentItems().size(), held(inventory));
+    }
+
+    /** @return whether the inventory holds a stack the Bailiff may take */
+    private static boolean hasTakeable(Inventory inventory) {
+        return !filled(inventory, inventory.getNonEquipmentItems().size(), held(inventory)).isEmpty();
+    }
+
+    /** @return the inventory's selected slot, which the Bailiff never takes from */
+    private static IntPredicate held(Inventory inventory) {
+        return slot -> slot == inventory.getSelectedSlot();
     }
 
     /**
@@ -278,12 +299,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
      * @return whether there was a stack to take
      */
     private boolean take(Container container, int slots, IntPredicate kept) {
-        var filled = new ArrayList<Integer>();
-        for (int slot = 0; slot < slots; slot++) {
-            if (!kept.test(slot) && !container.getItem(slot).isEmpty()) {
-                filled.add(slot);
-            }
-        }
+        var filled = filled(container, slots, kept);
         if (filled.isEmpty()) {
             return false;
         }
@@ -291,6 +307,17 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         stolen.add(container.removeItemNoUpdate(slot));
         container.setChanged();
         return true;
+    }
+
+    /** @return the slots among the first {@code slots} of {@code container} that hold a stack and {@code kept} doesn't keep */
+    private static List<Integer> filled(Container container, int slots, IntPredicate kept) {
+        var filled = new ArrayList<Integer>();
+        for (int slot = 0; slot < slots; slot++) {
+            if (!kept.test(slot) && !container.getItem(slot).isEmpty()) {
+                filled.add(slot);
+            }
+        }
+        return filled;
     }
 
     private void flee() {
@@ -439,9 +466,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     }
 
     /**
-     * With its haul from the base, walks up to its player, or as near as it gets in ten seconds,
-     * and taunts them: shakes its head with a mocking sound, and tells them in the action bar. Then
-     * it flees.
+     * With its haul, or with nothing to take, walks up to its player, or as near as it gets in ten
+     * seconds, and taunts them: shakes its head with a mocking sound, and tells them in the action
+     * bar that it took its due, or that it will return. Then it flees.
      */
     private final class Taunt extends Goal {
 
@@ -493,7 +520,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             entityData.set(DATA_TAUNTING, true);
             ticks = 0;
             level.playSound(null, getX(), getY(), getZ(), BailiffContent.TAUNTS.get(), SoundSource.HOSTILE, 1.5F, 1.0F);
-            target.sendOverlayMessage(Component.translatable("entity.atouchofwickedness.bailiff.taunt"));
+            target.sendOverlayMessage(Component.translatable(stolen.isEmpty()
+                    ? "entity.atouchofwickedness.bailiff.taunt_empty_handed" : "entity.atouchofwickedness.bailiff.taunt"));
         }
 
         @Override

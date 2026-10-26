@@ -4,6 +4,7 @@
   "item.atouchofwickedness.tally_stick": "Tally Stick",
   "entity.atouchofwickedness.bailiff": "Bailiff",
   "entity.atouchofwickedness.bailiff.taunt": "The Bailiff takes its due.",
+  "entity.atouchofwickedness.bailiff.taunt_empty_handed": "Nothing? The Bailiff will return.",
   "subtitles.atouchofwickedness.entity.bailiff.arrives": "Bailiff arrives",
   "subtitles.atouchofwickedness.entity.bailiff.taunts": "Bailiff taunts",
   "subtitles.atouchofwickedness.entity.bailiff.charges": "Bailiff gathers itself",
