@@ -16,7 +16,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * A Bailiff's arrival: one comes for a player, unless one already has, on a block it can stand on
  * the config's distance away across the ground, 12 to 24 blocks by default, in the player's
- * dimension, with a sound everyone near the spot hears.
+ * dimension, with a sound everyone near the player hears.
  */
 public final class Arrival {
 
@@ -46,8 +46,8 @@ public final class Arrival {
         bailiff.snapTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, player.getRandom().nextFloat() * 360, 0);
         bailiff.comeFor(player);
         level.addFreshEntity(bailiff);
-        // Loud enough to carry the whole way to its player.
-        level.playSound(null, bailiff.getX(), bailiff.getY(), bailiff.getZ(), BailiffContent.ARRIVES.get(), SoundSource.HOSTILE, 2.0F, 1.0F);
+        // At its player, so it sounds at its full whatever the distance it arrived from.
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), BailiffContent.ARRIVES.get(), SoundSource.HOSTILE, 2.0F, 1.0F);
         return true;
     }
 

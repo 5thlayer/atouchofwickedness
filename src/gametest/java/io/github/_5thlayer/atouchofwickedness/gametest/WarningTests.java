@@ -10,6 +10,7 @@ import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntityType;
@@ -50,7 +51,7 @@ final class WarningTests {
                 .thenExecute(() -> Wickedness.set(player, 95))
                 .thenWaitUntil(() -> assertHeard(helper, player, WARNINGS))
                 .thenExecute(() -> {
-                    if (bystander.heard.stream().anyMatch(WARNINGS::contains)) {
+                    if (bystander.heard.stream().anyMatch(sound -> WARNINGS.contains(sound.getSound()))) {
                         throw helper.assertionException("a player beside them heard their Warning");
                     }
                 })
@@ -59,7 +60,7 @@ final class WarningTests {
 
     /** Asserts that the player has heard {@code warnings}, in order, and no other Warning. */
     private static void assertHeard(GameTestHelper helper, Players.Joined player, List<Holder<SoundEvent>> warnings) {
-        var heard = player.heard.stream().filter(WARNINGS::contains).map(Holder::getRegisteredName).toList();
+        var heard = player.heard.stream().map(ClientboundSoundPacket::getSound).filter(WARNINGS::contains).map(Holder::getRegisteredName).toList();
         var expected = warnings.stream().map(Holder::getRegisteredName).toList();
         if (!heard.equals(expected)) {
             throw helper.assertionException("the player heard " + heard + ", not " + expected);

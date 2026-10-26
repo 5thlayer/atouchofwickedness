@@ -24,7 +24,7 @@ public final class BailiffContent {
     public static final DeferredHolder<EntityType<?>, EntityType<Bailiff>> BAILIFF = ENTITIES.registerEntityType("bailiff",
             Bailiff::new, MobCategory.MISC, builder -> builder.sized(0.6F, 1.95F).eyeHeight(1.62F).clientTrackingRange(10).noSave());
 
-    /** Heard by everyone near the spot where a Bailiff arrives; its subtitle reads "Bailiff arrives". */
+    /** Heard by everyone near the player a Bailiff arrives for; its subtitle reads "Bailiff arrives". */
     public static final DeferredHolder<SoundEvent, SoundEvent> ARRIVES = SOUNDS.register("entity.bailiff.arrives",
             () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(ATouchOfWickedness.MOD_ID, "entity.bailiff.arrives")));
 

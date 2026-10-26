@@ -139,8 +139,7 @@ public final class WickednessConfig {
                 .comment("How many seconds apart a Forfeit player hears footsteps, after the ones as they enter Forfeit.")
                 .defineInRange("secondsBetweenForfeit", 30, 1, 86_400);
         MARKED_DISTANCE = builder
-                .comment("How far off, in blocks, a Marked player's bell sounds. Every Warning is heard up to 32 blocks",
-                        "off, louder the nearer it is.")
+                .comment("How far off, in blocks, a Marked player's bell sounds. A Warning is louder the nearer it is.")
                 .defineInRange("markedDistance", 24, 0, 32);
         OVERDUE_DISTANCE = builder
                 .comment("How far off, in blocks, an Overdue player's chains sound.")

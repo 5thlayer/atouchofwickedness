@@ -6,6 +6,7 @@ package io.github._5thlayer.atouchofwickedness.gametest;
 import java.util.Set;
 
 import io.github._5thlayer.atouchofwickedness.ATouchOfWickedness;
+import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -24,7 +25,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  * ground, and as it arrives Wickedness drops to 0 and a new Threshold is drawn from 50 to 100. The
  * tests set a Threshold of 3, outside that range, so the redraw shows. No other Bailiff comes for
  * the player until the cooldown after that arrival is over. A Bailiff that finds no spot, or waits
- * out the cooldown, tries again every second, so the tests wait for it a few tries' worth.
+ * out the cooldown, tries again every second, so the tests wait for it a few tries' worth. Its
+ * arrival sounds at its player, wherever it arrived.
  */
 final class ArrivalTests {
 
@@ -39,6 +41,7 @@ final class ArrivalTests {
         tests.test("arrival_crossing_the_threshold_sends_one_bailiff", 100, ArrivalTests::crossing);
         tests.test("arrival_below_the_threshold_sends_none", 20, ArrivalTests::below);
         tests.test("arrival_with_no_spot_tries_again", 100, ArrivalTests::triesAgain);
+        tests.test("arrival_sounds_at_its_player", 100, ArrivalTests::soundsAtThePlayer);
         // In the batch after the others, since it shortens the cooldown every player's visits wait out.
         tests.testAlone("arrival_cooldown_holds_the_next_until_it_ends", 200, ArrivalTests::cooldown);
     }
@@ -110,6 +113,23 @@ final class ArrivalTests {
 
             @Override
             public void testAddedForRerun(GameTestInfo original, GameTestInfo copy, GameTestRunner runner) {
+            }
+        });
+    }
+
+    private static void soundsAtThePlayer(GameTestHelper helper) {
+        var player = Players.join(helper, PLAYER);
+        Wickedness.setThreshold(player, 3);
+        Wickedness.set(player, 3);
+        helper.succeedWhen(() -> {
+            var arrivals = player.heard.stream().filter(sound -> sound.getSound().value() == BailiffContent.ARRIVES.get()).toList();
+            if (arrivals.size() != 1) {
+                throw helper.assertionException("the player heard " + arrivals.size() + " arrivals, not 1");
+            }
+            var sound = arrivals.getFirst();
+            double off = Math.sqrt(player.distanceToSqr(sound.getX(), sound.getY(), sound.getZ()));
+            if (off > 1) {
+                throw helper.assertionException("the arrival sounded " + off + " blocks from its player");
             }
         });
     }

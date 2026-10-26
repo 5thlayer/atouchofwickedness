@@ -12,7 +12,6 @@ import com.mojang.authlib.GameProfile;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestInfo;
 import net.minecraft.gametest.framework.GameTestListener;
@@ -25,7 +24,6 @@ import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import org.jspecify.annotations.Nullable;
@@ -43,7 +41,7 @@ final class Players {
     static final class Joined extends ServerPlayer {
 
         final List<Component> actionBar = new ArrayList<>();
-        final List<Holder<SoundEvent>> heard = new ArrayList<>();
+        final List<ClientboundSoundPacket> heard = new ArrayList<>();
 
         Joined(GameTestHelper helper, GameProfile profile) {
             super(helper.getLevel().getServer(), helper.getLevel(), profile, ClientInformation.createDefault());
@@ -67,7 +65,7 @@ final class Players {
             @Override
             public void send(Packet<?> packet, @Nullable ChannelFutureListener listener, boolean flush) {
                 if (packet instanceof ClientboundSoundPacket sound) {
-                    player.heard.add(sound.getSound());
+                    player.heard.add(sound);
                 }
                 super.send(packet, listener, flush);
             }

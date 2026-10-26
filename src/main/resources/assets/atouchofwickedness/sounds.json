@@ -3,9 +3,9 @@
     "subtitle": "subtitles.atouchofwickedness.entity.bailiff.arrives",
     "sounds": [
       {
-        "name": "minecraft:block.bell.use",
+        "name": "minecraft:entity.wither.spawn",
         "type": "event",
-        "pitch": 0.5
+        "pitch": 1.55
       }
     ]
   },
@@ -24,15 +24,18 @@
     "sounds": [
       {
         "name": "minecraft:block.chain.place",
-        "type": "event"
+        "type": "event",
+        "volume": 2.0
       },
       {
         "name": "minecraft:block.chain.break",
-        "type": "event"
+        "type": "event",
+        "volume": 2.0
       },
       {
         "name": "minecraft:block.chain.fall",
-        "type": "event"
+        "type": "event",
+        "volume": 2.0
       }
     ]
   },

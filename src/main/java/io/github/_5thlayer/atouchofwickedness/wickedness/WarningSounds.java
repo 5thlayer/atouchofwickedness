@@ -35,8 +35,11 @@ public final class WarningSounds {
     private static final Map<Standing, DeferredHolder<SoundEvent, SoundEvent>> OF_BAND =
             Map.of(Standing.MARKED, MARKED, Standing.OVERDUE, OVERDUE, Standing.FORFEIT, FORFEIT);
 
-    /** Heard up to 32 blocks off, the farthest a Warning sounds, so each nearer one is louder. */
-    private static final float VOLUME = 2.0F;
+    /**
+     * Carries 128 blocks, so a Warning as far off as the config lets it, 32 blocks, still sounds at
+     * three quarters of its loudness, and the nearer bands near their full.
+     */
+    private static final float VOLUME = 8.0F;
 
     private WarningSounds() {
     }
