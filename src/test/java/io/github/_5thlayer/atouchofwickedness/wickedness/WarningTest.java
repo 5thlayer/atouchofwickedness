@@ -14,44 +14,45 @@ import org.junit.jupiter.api.Test;
  */
 class WarningTest {
 
-    private static final Warning.Intervals INTERVALS = new Warning.Intervals(2_400, 1_200, 600);
+    private static final Warning.Rules RULES = new Warning.Rules(
+            new Warning.Band(2_400, 24), new Warning.Band(1_200, 12), new Warning.Band(600, 4));
 
     @Test
     void cleanNeverWarns() {
-        assertFalse(Warning.due(Standing.CLEAN, Standing.CLEAN, Warning.NEVER, 100_000, INTERVALS));
-        assertFalse(Warning.due(Standing.MARKED, Standing.CLEAN, 0, 100_000, INTERVALS));
+        assertFalse(Warning.due(Standing.CLEAN, Standing.CLEAN, Warning.NEVER, 100_000, RULES));
+        assertFalse(Warning.due(Standing.MARKED, Standing.CLEAN, 0, 100_000, RULES));
     }
 
     @Test
     void enteringEachBandWarnsAtOnce() {
-        assertTrue(Warning.due(Standing.CLEAN, Standing.MARKED, Warning.NEVER, 1_000, INTERVALS));
-        assertTrue(Warning.due(Standing.MARKED, Standing.OVERDUE, 999, 1_000, INTERVALS));
-        assertTrue(Warning.due(Standing.OVERDUE, Standing.FORFEIT, 999, 1_000, INTERVALS));
+        assertTrue(Warning.due(Standing.CLEAN, Standing.MARKED, Warning.NEVER, 1_000, RULES));
+        assertTrue(Warning.due(Standing.MARKED, Standing.OVERDUE, 999, 1_000, RULES));
+        assertTrue(Warning.due(Standing.OVERDUE, Standing.FORFEIT, 999, 1_000, RULES));
     }
 
     @Test
     void leapingPastABandWarnsOfTheOneEntered() {
-        assertTrue(Warning.due(Standing.CLEAN, Standing.FORFEIT, Warning.NEVER, 1_000, INTERVALS));
+        assertTrue(Warning.due(Standing.CLEAN, Standing.FORFEIT, Warning.NEVER, 1_000, RULES));
     }
 
     @Test
     void stayingInABandWaitsOutItsInterval() {
-        assertFalse(Warning.due(Standing.MARKED, Standing.MARKED, 1_000, 3_399, INTERVALS));
-        assertTrue(Warning.due(Standing.MARKED, Standing.MARKED, 1_000, 3_400, INTERVALS));
-        assertFalse(Warning.due(Standing.OVERDUE, Standing.OVERDUE, 1_000, 2_199, INTERVALS));
-        assertTrue(Warning.due(Standing.OVERDUE, Standing.OVERDUE, 1_000, 2_200, INTERVALS));
-        assertFalse(Warning.due(Standing.FORFEIT, Standing.FORFEIT, 1_000, 1_599, INTERVALS));
-        assertTrue(Warning.due(Standing.FORFEIT, Standing.FORFEIT, 1_000, 1_600, INTERVALS));
+        assertFalse(Warning.due(Standing.MARKED, Standing.MARKED, 1_000, 3_399, RULES));
+        assertTrue(Warning.due(Standing.MARKED, Standing.MARKED, 1_000, 3_400, RULES));
+        assertFalse(Warning.due(Standing.OVERDUE, Standing.OVERDUE, 1_000, 2_199, RULES));
+        assertTrue(Warning.due(Standing.OVERDUE, Standing.OVERDUE, 1_000, 2_200, RULES));
+        assertFalse(Warning.due(Standing.FORFEIT, Standing.FORFEIT, 1_000, 1_599, RULES));
+        assertTrue(Warning.due(Standing.FORFEIT, Standing.FORFEIT, 1_000, 1_600, RULES));
     }
 
     @Test
     void fallingIntoALowerBandWaitsOutThatBandsInterval() {
-        assertFalse(Warning.due(Standing.FORFEIT, Standing.OVERDUE, 1_000, 1_600, INTERVALS));
-        assertTrue(Warning.due(Standing.FORFEIT, Standing.OVERDUE, 1_000, 2_200, INTERVALS));
+        assertFalse(Warning.due(Standing.FORFEIT, Standing.OVERDUE, 1_000, 1_600, RULES));
+        assertTrue(Warning.due(Standing.FORFEIT, Standing.OVERDUE, 1_000, 2_200, RULES));
     }
 
     @Test
     void aClockBehindTheLastWarningWarns() {
-        assertTrue(Warning.due(Standing.MARKED, Standing.MARKED, 1_000, 999, INTERVALS));
+        assertTrue(Warning.due(Standing.MARKED, Standing.MARKED, 1_000, 999, RULES));
     }
 }

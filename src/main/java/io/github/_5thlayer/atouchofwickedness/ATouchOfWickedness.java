@@ -6,7 +6,8 @@ package io.github._5thlayer.atouchofwickedness;
 import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
 import io.github._5thlayer.atouchofwickedness.wickedness.KindActs;
 import io.github._5thlayer.atouchofwickedness.wickedness.WickedKills;
-import io.github._5thlayer.atouchofwickedness.wickedness.Warnings;
+import io.github._5thlayer.atouchofwickedness.wickedness.FleeTheForfeit;
+import io.github._5thlayer.atouchofwickedness.wickedness.WarningSounds;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import io.github._5thlayer.atouchofwickedness.wickedness.WickednessCommand;
 import net.neoforged.bus.api.IEventBus;
@@ -15,11 +16,11 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 
 /**
- * The Pillar's entry point. It registers Wickedness and its Warnings, the Wicked kills that raise
- * it and the kind acts that atone for it, the Bailiff that comes when it reaches the Threshold, the
- * Seal and the Tally Stick, the {@code /wickedness} command, the common config and the Pillar's own
- * creative tab. The game tests hook themselves in from the {@code gametest} source set, which never
- * ships (libworks ADR 0011).
+ * The Pillar's entry point. It registers Wickedness, its Warnings and the animals fleeing a Forfeit
+ * player, the Wicked kills that raise it and the kind acts that atone for it, the Bailiff that comes
+ * when it reaches the Threshold, the Seal and the Tally Stick, the {@code /wickedness} command, the
+ * common config and the Pillar's own creative tab. The game tests hook themselves in from the
+ * {@code gametest} source set, which never ships (libworks ADR 0011).
  */
 @Mod(ATouchOfWickedness.MOD_ID)
 public final class ATouchOfWickedness {
@@ -30,7 +31,8 @@ public final class ATouchOfWickedness {
     public ATouchOfWickedness(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, WickednessConfig.SPEC);
         Wickedness.register(modBus);
-        Warnings.register(modBus);
+        WarningSounds.register(modBus);
+        FleeTheForfeit.register();
         WickedKills.register(modBus);
         KindActs.register();
         BailiffContent.register(modBus);

@@ -37,7 +37,12 @@ public final class WickednessConfig {
     private static final ModConfigSpec.IntValue SECONDS_BETWEEN_MARKED;
     private static final ModConfigSpec.IntValue SECONDS_BETWEEN_OVERDUE;
     private static final ModConfigSpec.IntValue SECONDS_BETWEEN_FORFEIT;
+    private static final ModConfigSpec.IntValue MARKED_DISTANCE;
+    private static final ModConfigSpec.IntValue OVERDUE_DISTANCE;
+    private static final ModConfigSpec.IntValue FORFEIT_DISTANCE;
     private static final ModConfigSpec.IntValue FLEE_RADIUS;
+    private static final ModConfigSpec.DoubleValue ANIMAL_FLEE_SPEED;
+    private static final ModConfigSpec.DoubleValue ANIMAL_FLEE_SPRINT_SPEED;
     private static final ModConfigSpec.IntValue ARRIVAL_MIN_DISTANCE;
     private static final ModConfigSpec.IntValue ARRIVAL_MAX_DISTANCE;
     private static final ModConfigSpec.IntValue SECONDS_BETWEEN_VISITS;
@@ -133,10 +138,28 @@ public final class WickednessConfig {
         SECONDS_BETWEEN_FORFEIT = builder
                 .comment("How many seconds apart a Forfeit player hears footsteps, after the ones as they enter Forfeit.")
                 .defineInRange("secondsBetweenForfeit", 30, 1, 86_400);
+        MARKED_DISTANCE = builder
+                .comment("How far off, in blocks, a Marked player's bell sounds. Every Warning is heard up to 32 blocks",
+                        "off, louder the nearer it is.")
+                .defineInRange("markedDistance", 24, 0, 32);
+        OVERDUE_DISTANCE = builder
+                .comment("How far off, in blocks, an Overdue player's chains sound.")
+                .defineInRange("overdueDistance", 12, 0, 32);
+        FORFEIT_DISTANCE = builder
+                .comment("How far off, in blocks, a Forfeit player's footsteps sound.")
+                .defineInRange("forfeitDistance", 4, 0, 32);
         FLEE_RADIUS = builder
-                .comment("How near, in blocks, passive animals flee from a Forfeit player. It applies to animals that",
-                        "join the world after it changes.")
+                .comment("How near, in blocks, passive animals flee from a Forfeit player they see. It applies to",
+                        "animals that join the world after it changes.")
                 .defineInRange("fleeRadius", 16, 1, 64);
+        ANIMAL_FLEE_SPEED = builder
+                .comment("How many times its own speed an animal flees from a Forfeit player at. It applies to animals",
+                        "that join the world after it changes.")
+                .defineInRange("animalFleeSpeed", 1.0, 0, 10);
+        ANIMAL_FLEE_SPRINT_SPEED = builder
+                .comment("How many times its own speed an animal flees at while within 7 blocks of the player.",
+                        "It applies to animals that join the world after it changes.")
+                .defineInRange("animalFleeSprintSpeed", 1.4, 0, 10);
         builder.pop();
 
         builder.push("bailiff");
@@ -218,13 +241,23 @@ public final class WickednessConfig {
         return new Standing.Bands(MARKED.getAsDouble(), OVERDUE.getAsDouble(), FORFEIT.getAsDouble());
     }
 
-    public static Warning.Intervals warningIntervals() {
-        return new Warning.Intervals(SECONDS_BETWEEN_MARKED.getAsInt() * 20L, SECONDS_BETWEEN_OVERDUE.getAsInt() * 20L,
-                SECONDS_BETWEEN_FORFEIT.getAsInt() * 20L);
+    public static Warning.Rules warningRules() {
+        return new Warning.Rules(
+                new Warning.Band(SECONDS_BETWEEN_MARKED.getAsInt() * 20L, MARKED_DISTANCE.getAsInt()),
+                new Warning.Band(SECONDS_BETWEEN_OVERDUE.getAsInt() * 20L, OVERDUE_DISTANCE.getAsInt()),
+                new Warning.Band(SECONDS_BETWEEN_FORFEIT.getAsInt() * 20L, FORFEIT_DISTANCE.getAsInt()));
     }
 
     public static int fleeRadius() {
         return FLEE_RADIUS.getAsInt();
+    }
+
+    public static double animalFleeSpeed() {
+        return ANIMAL_FLEE_SPEED.getAsDouble();
+    }
+
+    public static double animalFleeSprintSpeed() {
+        return ANIMAL_FLEE_SPRINT_SPEED.getAsDouble();
     }
 
     public static int arrivalMinDistance() {
