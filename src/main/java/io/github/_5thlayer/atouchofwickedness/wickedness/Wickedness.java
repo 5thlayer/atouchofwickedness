@@ -26,14 +26,13 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * Threshold is drawn as it arrives, though one that leaves with nothing leaves the player owing
  * ({@link #owe}). No other Bailiff comes for the player until the cooldown
  * after that arrival is over. While the player stays at or above their Threshold, as when a
- * Bailiff found no spot to arrive on or the cooldown still ran, a Bailiff tries again every second.
+ * Bailiff found no spot to arrive on or the cooldown still ran, the visit stays owed and a Bailiff
+ * tries again every few seconds, the config's retry interval; a dead player's waits until they
+ * respawn.
  * Wickedness and the Threshold are copied through death, so dying changes neither. As Wickedness
  * nears the Threshold, the player hears {@link WarningSounds}.
  */
 public final class Wickedness {
-
-    /** Ticks between a Bailiff's tries to arrive while the player is at or above their Threshold. */
-    private static final int RETRY_TICKS = 20;
 
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, ATouchOfWickedness.MOD_ID);
@@ -52,7 +51,7 @@ public final class Wickedness {
         // The Threshold is drawn on first join, so it is saved from then on.
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> event.getEntity().getData(TALLY));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
-            boolean retry = event.getServer().getTickCount() % RETRY_TICKS == 0;
+            boolean retry = event.getServer().getTickCount() % WickednessConfig.ticksBetweenRetries() == 0;
             event.getServer().getPlayerList().getPlayers().forEach(player -> tick(player, retry));
         });
     }
@@ -95,13 +94,13 @@ public final class Wickedness {
     }
 
     /**
-     * Sends the Bailiff once the player's Wickedness is at their Threshold and the cooldown after
-     * the last one is over, and as it arrives resets Wickedness to 0, draws a new Threshold and
+     * Sends the Bailiff once the player's Wickedness is at their Threshold, the player is alive and
+     * the cooldown after the last one is over, and as it arrives resets Wickedness to 0, draws a new Threshold and
      * starts the cooldown, in the tally the player holds.
      */
     private static void visit(ServerPlayer player, Tally tally) {
         long now = player.level().getGameTime();
-        if (tally.wickedness >= tally.threshold && counts(player)
+        if (tally.wickedness >= tally.threshold && counts(player) && player.isAlive()
                 && VisitCooldown.over(tally.arrivedAt, now, WickednessConfig.ticksBetweenVisits())
                 && Arrival.arrive(player)) {
             tally.wickedness = 0;

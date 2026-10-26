@@ -86,6 +86,7 @@ public final class ATouchOfWickednessGameTests {
         ReportTests.register(tests);
         WarningTests.register(tests);
         SleepTests.register(tests);
+        HarderWorldTests.register(tests);
     }
 
     private static Identifier id(String path) {

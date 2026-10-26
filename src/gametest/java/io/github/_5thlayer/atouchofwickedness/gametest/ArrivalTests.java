@@ -25,7 +25,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  * ground, and as it arrives Wickedness drops to 0 and a new Threshold is drawn from 50 to 100. The
  * tests set a Threshold of 3, outside that range, so the redraw shows. No other Bailiff comes for
  * the player until the cooldown after that arrival is over. A Bailiff that finds no spot, or waits
- * out the cooldown, tries again every second, so the tests wait for it a few tries' worth. Its
+ * out the cooldown, tries again every 3 seconds, so the tests wait for it a few tries' worth. Its
  * arrival sounds at its player, wherever it arrived.
  */
 final class ArrivalTests {
@@ -40,10 +40,10 @@ final class ArrivalTests {
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
         tests.test("arrival_crossing_the_threshold_sends_one_bailiff", 100, ArrivalTests::crossing);
         tests.test("arrival_below_the_threshold_sends_none", 20, ArrivalTests::below);
-        tests.test("arrival_with_no_spot_tries_again", 100, ArrivalTests::triesAgain);
+        tests.test("arrival_with_no_spot_tries_again", 200, ArrivalTests::triesAgain);
         tests.test("arrival_sounds_at_its_player", 100, ArrivalTests::soundsAtThePlayer);
         // In the batch after the others, since it shortens the cooldown every player's visits wait out.
-        tests.testAlone("arrival_cooldown_holds_the_next_until_it_ends", 200, ArrivalTests::cooldown);
+        tests.testAlone("arrival_cooldown_holds_the_next_until_it_ends", 300, ArrivalTests::cooldown);
     }
 
     private static void crossing(GameTestHelper helper) {
@@ -55,7 +55,7 @@ final class ArrivalTests {
                 .thenWaitUntil(() -> assertArrived(helper, player))
                 .thenExecute(() -> {
                     // Gone at once, a second crossing still sends no other while the cooldown runs,
-                    // nor do the tries every second after it.
+                    // nor do the tries every 3 seconds after it.
                     Bailiffs.of(player).forEach(Entity::discard);
                     Wickedness.set(player, Wickedness.threshold(player));
                 })

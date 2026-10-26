@@ -23,12 +23,14 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.Container;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -38,6 +40,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -57,6 +60,8 @@ import org.jspecify.annotations.Nullable;
  * rob it mugs its player instead: it goes for them, and its first hit that lands takes one stack at
  * random from their main inventory or hotbar, never the held item, their worn armour or off hand,
  * and it goes to taunt them. A player with nothing it may take it taunts at once, empty-handed.
+ * Until it has its haul, an item lying near it, its dead player's drops included, is its haul too:
+ * it walks to it and picks it up. On Peaceful its hits deal nothing and still steal.
  * Arriving at night, it lies down where it arrived and sleeps until dawn under rising Zs, harmless:
  * the first hit on it deals double damage and wakes it, and its time on site starts as it wakes. A
  * player who hits it as it robs or taunts sends it fleeing at once. Once its time on site is up it
@@ -64,7 +69,8 @@ import org.jspecify.annotations.Nullable;
  * them, or after a while however far it got, it stands still charging a teleport, when its player
  * can still kill it from afar, then vanishes with what it carries; one that vanishes with nothing
  * leaves its player owing ({@link Wickedness#owe}). Killed, it drops everything it stole and a few
- * Seals. It is never saved, so a visit never outlasts the server.
+ * Seals. Its player dying doesn't end the visit, but their logging out or changing dimension does,
+ * and it is never saved, so a visit never outlasts the server.
  */
 public final class Bailiff extends PathfinderMob implements ContainerUser {
 
@@ -85,6 +91,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
     /** Ticks a fleeing Bailiff runs for before it charges its teleport wherever it got to, as when cornered. */
     private static final int TICKS_TO_GET_AWAY = 400;
+
+    /** How near, in blocks, an item lying on the ground must be for the Bailiff to go for it. */
+    private static final double LOOSE_RADIUS = 6;
 
     /** Ticks between the Zs a sleeping Bailiff sleeps under. */
     private static final int TICKS_BETWEEN_SNORES = 20;
@@ -141,6 +150,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new Flee());
         goalSelector.addGoal(1, new Sleep());
+        goalSelector.addGoal(1, new Gather());
         goalSelector.addGoal(2, new Rob());
         goalSelector.addGoal(2, new Taunt());
         goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.0, true));
@@ -259,7 +269,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         super.customServerAiStep(level);
         var target = target(level);
         if (target == null) {
-            // Its player left, or left the dimension: the visit is over.
+            // Its player left, or left the dimension: the visit is over. One who died is still here.
             discard();
             return;
         }
@@ -270,7 +280,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             return;
         }
         if (phase != Phase.FLEEING) {
-            if (phase == Phase.MUGGING) {
+            if (phase == Phase.MUGGING && target.isAlive()) {
                 setTarget(target);
             }
             if (++ticksOnSite >= WickednessConfig.ticksOnSite()) {
@@ -308,17 +318,25 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         discard();
     }
 
+    /** @return its player, dead or alive, while they are in its level, or null once they left it */
     private @Nullable ServerPlayer target(ServerLevel level) {
-        if (player == null) {
-            return null;
-        }
-        var target = level.getPlayerByUUID(player);
-        return target instanceof ServerPlayer serverPlayer && serverPlayer.isAlive() ? serverPlayer : null;
+        return player != null && level.getPlayerByUUID(player) instanceof ServerPlayer target ? target : null;
+    }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        // Its own player on Peaceful too, where no mob may go for a player: it comes to rob them, not hurt them.
+        return target instanceof ServerPlayer hit && cameFor(hit) ? target.canBeSeenAsEnemy() : super.canAttack(target);
     }
 
     @Override
     public boolean doHurtTarget(ServerLevel level, Entity target) {
         boolean landed = super.doHurtTarget(level, target);
+        if (!landed && level.getDifficulty() == Difficulty.PEACEFUL && target instanceof ServerPlayer hit && cameFor(hit)
+                && hit.isAlive() && !hit.isInvulnerableTo(level, damageSources().mobAttack(this))) {
+            // Peaceful scales its hit to nothing, which no player takes, but theft is no damage.
+            landed = true;
+        }
         if (landed && phase == Phase.MUGGING && target instanceof ServerPlayer hit && cameFor(hit)) {
             // Whether or not it found a stack, it has had its go.
             steal(hit);
@@ -396,6 +414,21 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
     private void flee() {
         phase = Phase.FLEEING;
+        setTarget(null);
+    }
+
+    /** @return whether the Bailiff would pick up an item lying near it: awake, not yet fleeing, and with no haul yet */
+    private boolean wantsLoose() {
+        return stolen.isEmpty() && !isAsleep() && phase != Phase.FLEEING;
+    }
+
+    /** Picks up {@code item}, its haul, as a mob picks up loot, and goes to taunt its player. */
+    private void pickUp(ItemEntity item) {
+        onItemPickup(item);
+        take(item, item.getItem().getCount());
+        stolen.add(item.getItem().copy());
+        item.discard();
+        phase = Phase.TAUNTING;
         setTarget(null);
     }
 
@@ -573,7 +606,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
                 return;
             }
             var target = target(level);
-            if (target == null) {
+            if (target == null || !target.isAlive()) {
+                // A dead player it taunts once they are back.
                 return;
             }
             getLookControl().setLookAt(target);
@@ -601,6 +635,83 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         @Override
         public void stop() {
             entityData.set(DATA_TAUNTING, false);
+            getNavigation().stop();
+        }
+    }
+
+    /**
+     * Until it has its haul, walks to the nearest item lying near it, and picks it up once it can,
+     * before robbing, mugging or taunting. One it can't reach and pick up in ten
+     * seconds it leaves.
+     */
+    private final class Gather extends Goal {
+
+        /** The items it gave up on, for as long as it is here. */
+        private final List<ItemEntity> outOfReach = new ArrayList<>();
+        private @Nullable ItemEntity item;
+        private int ticks;
+
+        Gather() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!wantsLoose()) {
+                return false;
+            }
+            item = level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(LOOSE_RADIUS),
+                            loose -> loose.isAlive() && !loose.getItem().isEmpty() && !outOfReach.contains(loose))
+                    .stream().min(Comparator.comparingDouble(Bailiff.this::distanceToSqr)).orElse(null);
+            return item != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return wantsLoose() && item != null && item.isAlive() && !outOfReach.contains(item);
+        }
+
+        @Override
+        public void start() {
+            ticks = 0;
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            if (item == null || !canContinueToUse()) {
+                return;
+            }
+            getLookControl().setLookAt(item);
+            // Ten seconds however it spends them, so one that is never picked up holds it no longer.
+            if (++ticks > TICKS_TO_REACH) {
+                outOfReach.add(item);
+                return;
+            }
+            // A mob's reach for loot, and a dead player's drops wait out their pickup delay.
+            if (getBoundingBox().inflate(1, 0, 1).intersects(item.getBoundingBox())) {
+                if (!item.hasPickUpDelay()) {
+                    pickUp(item);
+                }
+                return;
+            }
+            if (distanceToSqr(item) < 4) {
+                // A path ends on the item's block, which may leave it just out of reach: the last
+                // steps it walks straight.
+                getNavigation().stop();
+                getMoveControl().setWantedPosition(item.getX(), item.getY(), item.getZ(), 1.0);
+            } else if (getNavigation().isDone()) {
+                getNavigation().moveTo(item, 1.0);
+            }
+        }
+
+        @Override
+        public void stop() {
+            item = null;
             getNavigation().stop();
         }
     }

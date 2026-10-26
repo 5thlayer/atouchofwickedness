@@ -46,6 +46,7 @@ public final class WickednessConfig {
     private static final ModConfigSpec.IntValue ARRIVAL_MIN_DISTANCE;
     private static final ModConfigSpec.IntValue ARRIVAL_MAX_DISTANCE;
     private static final ModConfigSpec.IntValue SECONDS_BETWEEN_VISITS;
+    private static final ModConfigSpec.IntValue SECONDS_BETWEEN_RETRIES;
     private static final ModConfigSpec.DoubleValue BAILIFF_HEALTH;
     private static final ModConfigSpec.DoubleValue BAILIFF_DAMAGE;
     private static final ModConfigSpec.DoubleValue BAILIFF_KNOCKBACK_RESISTANCE;
@@ -174,6 +175,10 @@ public final class WickednessConfig {
                 .comment("How many seconds after a Bailiff arrives before another may come for the same player.",
                         "A player still at or above their Threshold when it ends is visited again then.")
                 .defineInRange("secondsBetweenVisits", 300, 0, 86_400);
+        SECONDS_BETWEEN_RETRIES = builder
+                .comment("How many seconds apart an owed visit tries again to send a Bailiff, as when the last try found",
+                        "no spot for it to arrive on or the cooldown still ran. Wickedness resets only once one arrives.")
+                .defineInRange("secondsBetweenRetries", 3, 1, 3600);
         BAILIFF_HEALTH = builder
                 .comment("The Bailiff's health, in half hearts.")
                 .defineInRange("health", 60.0, 1, 1024);
@@ -279,6 +284,10 @@ public final class WickednessConfig {
 
     public static int ticksBetweenVisits() {
         return SECONDS_BETWEEN_VISITS.getAsInt() * 20;
+    }
+
+    public static int ticksBetweenRetries() {
+        return SECONDS_BETWEEN_RETRIES.getAsInt() * 20;
     }
 
     public static double bailiffHealth() {
