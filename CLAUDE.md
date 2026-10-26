@@ -21,6 +21,13 @@ Conventional commits: `<type>(<optional scope>): <summary>`, with the summary in
 - The `skillworks:gametest-loop` skill runs a subset, `--tests 'atouchofwickedness:<glob>' 1`, one glob a run, so a ticket's new game tests share a name prefix that selects them all.
 - CI (`.github/workflows/ci.yml`) runs both through libworks' `module-ci.yml` on every push and never publishes.
 
+### What to test
+
+- JUnit covers every case and boundary of the plain-Java arithmetic; a game test proves each hook once (the event fires, the right player is credited, the right state is read) and never re-runs a boundary JUnit pins.
+- That a number is in common config is checked in review, not by a test.
+- Vanilla's own machinery, such as a loot function's Looting bonus or golems turning on bad gossip, isn't tested: force the Pillar's part to a certain outcome, such as a chance of 1, and test that.
+- A change to a rule rewrites the test that pinned the old rule, rather than adding one beside it.
+
 ### Game-test code
 
 - Everything that exists only for the Pillar's own runs lives in the `gametest` source set, which never ships (libworks ADRs 0004 and 0011): its game-test code, its test-only resources and its packs.
