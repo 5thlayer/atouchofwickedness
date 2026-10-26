@@ -6,7 +6,6 @@ package io.github._5thlayer.atouchofwickedness.bailiff;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
@@ -83,9 +82,9 @@ public final class Bailiff extends PathfinderMob {
         setHealth(getMaxHealth());
     }
 
-    /** @return the player the Bailiff came for, if it came for one */
-    public Optional<UUID> player() {
-        return Optional.ofNullable(player);
+    /** @return whether the Bailiff came for {@code target} */
+    public boolean cameFor(ServerPlayer target) {
+        return target.getUUID().equals(player);
     }
 
     /** @return whether the Bailiff is done and running off with what it took */
@@ -127,7 +126,7 @@ public final class Bailiff extends PathfinderMob {
     @Override
     public boolean doHurtTarget(ServerLevel level, Entity target) {
         boolean landed = super.doHurtTarget(level, target);
-        if (landed && !fleeing && target instanceof ServerPlayer hit && hit.getUUID().equals(player)) {
+        if (landed && !fleeing && target instanceof ServerPlayer hit && cameFor(hit)) {
             steal(hit);
         }
         return landed;
@@ -160,10 +159,16 @@ public final class Bailiff extends PathfinderMob {
     }
 
     @Override
-    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean killedByPlayer) {
-        super.dropCustomDeathLoot(level, source, killedByPlayer);
+    protected void dropEquipment(ServerLevel level) {
+        super.dropEquipment(level);
+        // The players' own goods, so they drop whatever doMobLoot says, as a player's do on death.
         stolen.forEach(stack -> spawnAtLocation(level, stack));
         stolen.clear();
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean killedByPlayer) {
+        super.dropCustomDeathLoot(level, source, killedByPlayer);
         int seals = WickednessConfig.sealsMin() + getRandom().nextInt(WickednessConfig.sealsMax() - WickednessConfig.sealsMin() + 1);
         if (seals > 0) {
             spawnAtLocation(level, new ItemStack(WickednessItems.SEAL.get(), seals));

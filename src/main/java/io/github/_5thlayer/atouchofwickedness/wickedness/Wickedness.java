@@ -76,7 +76,7 @@ public final class Wickedness {
         }
     }
 
-    /** Sets the player's Threshold. For the game tests, which need to know when a Bailiff comes. */
+    /** Sets the player's Threshold, at least 1, until the next visit draws another. */
     public static void setThreshold(ServerPlayer player, int threshold) {
         var tally = player.getData(TALLY);
         tally.threshold = Math.max(1, threshold);

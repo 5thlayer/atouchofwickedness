@@ -28,7 +28,7 @@ final class Bailiffs {
     /** @return every Bailiff in the player's level come for them */
     static List<? extends Bailiff> of(ServerPlayer player) {
         return player.level().getEntities(BailiffContent.BAILIFF.get(),
-                bailiff -> bailiff.player().filter(player.getUUID()::equals).isPresent());
+                bailiff -> bailiff.cameFor(player));
     }
 
     /** The Bailiff lands a hit on its player, who is at once ready for the next one. */

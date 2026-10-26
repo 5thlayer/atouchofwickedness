@@ -15,8 +15,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A Bailiff's arrival: one comes for a player, unless one already has, on a block it can stand on
- * 12 to 24 blocks away across the ground, in the player's dimension, with a sound everyone near the
- * spot hears.
+ * the config's distance away across the ground, 12 to 24 blocks by default, in the player's
+ * dimension, with a sound everyone near the spot hears.
  */
 public final class Arrival {
 
@@ -52,7 +52,7 @@ public final class Arrival {
     }
 
     private static boolean hasOne(ServerLevel level, ServerPlayer player) {
-        return !level.getEntities(BailiffContent.BAILIFF.get(), bailiff -> bailiff.player().filter(player.getUUID()::equals).isPresent()).isEmpty();
+        return !level.getEntities(BailiffContent.BAILIFF.get(), bailiff -> bailiff.cameFor(player)).isEmpty();
     }
 
     private static @Nullable BlockPos spot(ServerLevel level, ServerPlayer player) {
