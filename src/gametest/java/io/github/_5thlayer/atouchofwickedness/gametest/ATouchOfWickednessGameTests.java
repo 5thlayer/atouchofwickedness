@@ -75,6 +75,7 @@ public final class ATouchOfWickednessGameTests {
         CommandTests.register(tests);
         WayBackTests.register(tests);
         ReportTests.register(tests);
+        WarningTests.register(tests);
     }
 
     private static Identifier id(String path) {

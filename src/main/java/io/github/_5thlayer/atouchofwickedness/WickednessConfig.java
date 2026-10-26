@@ -5,6 +5,7 @@ package io.github._5thlayer.atouchofwickedness;
 
 import io.github._5thlayer.atouchofwickedness.wickedness.Atonement;
 import io.github._5thlayer.atouchofwickedness.wickedness.Standing;
+import io.github._5thlayer.atouchofwickedness.wickedness.Warning;
 import io.github._5thlayer.atouchofwickedness.wickedness.WickednessWeight;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
@@ -33,6 +34,10 @@ public final class WickednessConfig {
     private static final ModConfigSpec.DoubleValue MARKED;
     private static final ModConfigSpec.DoubleValue OVERDUE;
     private static final ModConfigSpec.DoubleValue FORFEIT;
+    private static final ModConfigSpec.IntValue SECONDS_BETWEEN_MARKED;
+    private static final ModConfigSpec.IntValue SECONDS_BETWEEN_OVERDUE;
+    private static final ModConfigSpec.IntValue SECONDS_BETWEEN_FORFEIT;
+    private static final ModConfigSpec.IntValue FLEE_RADIUS;
     private static final ModConfigSpec.IntValue ARRIVAL_MIN_DISTANCE;
     private static final ModConfigSpec.IntValue ARRIVAL_MAX_DISTANCE;
     private static final ModConfigSpec.IntValue SECONDS_BETWEEN_VISITS;
@@ -107,14 +112,31 @@ public final class WickednessConfig {
 
         builder.push("standing");
         MARKED = builder
-                .comment("Where the Tally Stick starts reading Marked, as a fraction of the player's Threshold.")
+                .comment("Where the Tally Stick starts reading Marked, and the Warnings start, as a fraction of the player's Threshold.")
                 .defineInRange("marked", 0.5, 0, 1);
         OVERDUE = builder
-                .comment("Where the Tally Stick starts reading Overdue, as a fraction of the player's Threshold.")
+                .comment("Where the Tally Stick starts reading Overdue, and the Warnings draw nearer, as a fraction of the player's Threshold.")
                 .defineInRange("overdue", 0.75, 0, 1);
         FORFEIT = builder
-                .comment("Where the Tally Stick starts reading Forfeit, as a fraction of the player's Threshold.")
+                .comment("Where the Tally Stick starts reading Forfeit, the Warnings are close and animals flee,",
+                        "as a fraction of the player's Threshold.")
                 .defineInRange("forfeit", 0.9, 0, 1);
+        builder.pop();
+
+        builder.push("warnings");
+        SECONDS_BETWEEN_MARKED = builder
+                .comment("How many seconds apart a Marked player hears a far bell, after the one as they enter Marked.")
+                .defineInRange("secondsBetweenMarked", 120, 1, 86_400);
+        SECONDS_BETWEEN_OVERDUE = builder
+                .comment("How many seconds apart an Overdue player hears chains, after the ones as they enter Overdue.")
+                .defineInRange("secondsBetweenOverdue", 60, 1, 86_400);
+        SECONDS_BETWEEN_FORFEIT = builder
+                .comment("How many seconds apart a Forfeit player hears footsteps, after the ones as they enter Forfeit.")
+                .defineInRange("secondsBetweenForfeit", 30, 1, 86_400);
+        FLEE_RADIUS = builder
+                .comment("How near, in blocks, passive animals flee from a Forfeit player. It applies to animals that",
+                        "join the world after it changes.")
+                .defineInRange("fleeRadius", 16, 1, 64);
         builder.pop();
 
         builder.push("bailiff");
@@ -194,6 +216,15 @@ public final class WickednessConfig {
 
     public static Standing.Bands bands() {
         return new Standing.Bands(MARKED.getAsDouble(), OVERDUE.getAsDouble(), FORFEIT.getAsDouble());
+    }
+
+    public static Warning.Intervals warningIntervals() {
+        return new Warning.Intervals(SECONDS_BETWEEN_MARKED.getAsInt() * 20L, SECONDS_BETWEEN_OVERDUE.getAsInt() * 20L,
+                SECONDS_BETWEEN_FORFEIT.getAsInt() * 20L);
+    }
+
+    public static int fleeRadius() {
+        return FLEE_RADIUS.getAsInt();
     }
 
     public static int arrivalMinDistance() {

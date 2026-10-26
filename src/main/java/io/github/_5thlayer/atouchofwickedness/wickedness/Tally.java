@@ -12,6 +12,7 @@ import net.minecraft.util.ExtraCodecs;
  * A player's Wickedness and Threshold, as the server keeps them, with the Decay carried towards the
  * next point, the gifts that counted on their latest day of giving and when their last Bailiff
  * arrived: saved with the player, copied through death, and never sent to the client (ADR 0002).
+ * The Standing last seen and the last Warning are kept only while the player is online.
  * {@link Wickedness} reads and changes it.
  */
 final class Tally {
@@ -37,6 +38,10 @@ final class Tally {
     long arrivedAt;
     /** The world's clock when Decay last ran, never saved, so no Decay accrues while the player is away. */
     long decayedAt = UNSEEN;
+    /** The player's Standing when last seen, never saved, so a player who joins Marked or worse hears a Warning at once. */
+    Standing seen = Standing.CLEAN;
+    /** The game time of the player's last Warning, never saved, or {@link Warning#NEVER}. */
+    long warnedAt = Warning.NEVER;
 
     Tally(int wickedness, int threshold) {
         this(wickedness, threshold, 0, Atonement.Gifts.NONE, VisitCooldown.NEVER);

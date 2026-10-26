@@ -26,7 +26,8 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * Threshold is drawn as it arrives. No other Bailiff comes for the player until the cooldown
  * after that arrival is over. While the player stays at or above their Threshold, as when a
  * Bailiff found no spot to arrive on or the cooldown still ran, a Bailiff tries again every second.
- * Both are copied through death, so dying changes neither.
+ * As Wickedness nears the Threshold, the player hears {@link Warnings}. Both are copied through death, so
+ * dying changes neither.
  */
 public final class Wickedness {
 
@@ -129,12 +130,25 @@ public final class Wickedness {
         }
     }
 
-    /** Runs the player's Decay, and on a retry tick tries the Bailiff's arrival again. */
+    /** Runs the player's Decay, on a retry tick tries the Bailiff's arrival again, and sounds any Warning due. */
     private static void tick(ServerPlayer player, boolean retry) {
         decay(player);
         if (retry) {
             visit(player, player.getData(TALLY));
         }
+        warn(player);
+    }
+
+    /** Sounds the player's Warning if one is due, unless the player is in Creative or Spectator. */
+    private static void warn(ServerPlayer player) {
+        var tally = player.getData(TALLY);
+        var standing = standing(player);
+        long now = player.level().getGameTime();
+        if (counts(player) && Warning.due(tally.seen, standing, tally.warnedAt, now, WickednessConfig.warningIntervals())) {
+            Warnings.sound(player, standing);
+            tally.warnedAt = now;
+        }
+        tally.seen = standing;
     }
 
     /** Runs the player's Decay over the clock's ticks since it last ran, which the first tick seen only reads. */

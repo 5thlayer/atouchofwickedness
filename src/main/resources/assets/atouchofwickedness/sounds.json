@@ -8,5 +8,49 @@
         "pitch": 0.5
       }
     ]
+  },
+  "warning.marked": {
+    "subtitle": "subtitles.atouchofwickedness.warning.marked",
+    "sounds": [
+      {
+        "name": "minecraft:block.bell.use",
+        "type": "event",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "warning.overdue": {
+    "subtitle": "subtitles.atouchofwickedness.warning.overdue",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.place",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.chain.break",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.chain.fall",
+        "type": "event"
+      }
+    ]
+  },
+  "warning.forfeit": {
+    "subtitle": "subtitles.atouchofwickedness.warning.forfeit",
+    "sounds": [
+      {
+        "name": "minecraft:block.gravel.step",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.grass.step",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.wood.step",
+        "type": "event"
+      }
+    ]
   }
 }
