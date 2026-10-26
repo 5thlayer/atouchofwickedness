@@ -72,6 +72,7 @@ public final class ATouchOfWickednessGameTests {
         ThresholdTests.register(tests);
         ArrivalTests.register(tests);
         TheftTests.register(tests);
+        RobberyTests.register(tests);
         FleeTests.register(tests);
         DropTests.register(tests);
         TallyStickTests.register(tests);

@@ -51,6 +51,8 @@ public final class WickednessConfig {
     private static final ModConfigSpec.DoubleValue BAILIFF_KNOCKBACK_RESISTANCE;
     private static final ModConfigSpec.DoubleValue BAILIFF_SPEED;
     private static final ModConfigSpec.DoubleValue BAILIFF_FLEE_SPEED;
+    private static final ModConfigSpec.IntValue CONTAINERS_REMEMBERED;
+    private static final ModConfigSpec.IntValue ROBBING_RADIUS;
     private static final ModConfigSpec.IntValue QUOTA;
     private static final ModConfigSpec.IntValue SECONDS_ON_SITE;
     private static final ModConfigSpec.IntValue SECONDS_TO_VANISH;
@@ -187,8 +189,15 @@ public final class WickednessConfig {
         BAILIFF_FLEE_SPEED = builder
                 .comment("How many times its own speed the Bailiff flees at. Above about 1.1 it outruns a sprinting player.")
                 .defineInRange("fleeSpeed", 1.4, 0, 10);
+        CONTAINERS_REMEMBERED = builder
+                .comment("How many of the Seizable containers a player opened, the most recent, are remembered on them",
+                        "for their Bailiff to rob. Only these are ever robbed.")
+                .defineInRange("containersRemembered", 32, 1, 1024);
+        ROBBING_RADIUS = builder
+                .comment("How near, in blocks, to where it arrived a remembered container must be for the Bailiff to rob it.")
+                .defineInRange("robbingRadius", 32, 0, 128);
         QUOTA = builder
-                .comment("How many stacks a Bailiff takes on a visit before it flees.")
+                .comment("How many stacks a Bailiff takes on a visit, from its player's containers and from the player, before it flees.")
                 .defineInRange("quota", 5, 1, 64);
         SECONDS_ON_SITE = builder
                 .comment("How many seconds after it arrives a Bailiff flees, whatever it has taken.")
@@ -289,6 +298,14 @@ public final class WickednessConfig {
 
     public static double bailiffFleeSpeed() {
         return BAILIFF_FLEE_SPEED.getAsDouble();
+    }
+
+    public static int containersRemembered() {
+        return CONTAINERS_REMEMBERED.getAsInt();
+    }
+
+    public static int robbingRadius() {
+        return ROBBING_RADIUS.getAsInt();
     }
 
     public static int quota() {

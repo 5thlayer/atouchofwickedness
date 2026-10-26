@@ -4,6 +4,7 @@
 package io.github._5thlayer.atouchofwickedness;
 
 import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
+import io.github._5thlayer.atouchofwickedness.bailiff.Seizable;
 import io.github._5thlayer.atouchofwickedness.wickedness.KindActs;
 import io.github._5thlayer.atouchofwickedness.wickedness.WickedKills;
 import io.github._5thlayer.atouchofwickedness.wickedness.FleeTheForfeit;
@@ -18,9 +19,10 @@ import net.neoforged.fml.config.ModConfig;
 /**
  * The Pillar's entry point. It registers Wickedness, its Warnings and the animals fleeing a Forfeit
  * player, the Wicked kills that raise it and the kind acts that atone for it, the Bailiff that comes
- * when it reaches the Threshold, the Seal and the Tally Stick, the {@code /wickedness} command, the
- * common config and the Pillar's own creative tab. The game tests hook themselves in from the
- * {@code gametest} source set, which never ships (libworks ADR 0011).
+ * when it reaches the Threshold and the Seizable containers it robs, the Seal and the Tally Stick,
+ * the {@code /wickedness} command, the common config and the Pillar's own creative tab. The game
+ * tests hook themselves in from the {@code gametest} source set, which never ships (libworks ADR
+ * 0011).
  */
 @Mod(ATouchOfWickedness.MOD_ID)
 public final class ATouchOfWickedness {
@@ -36,6 +38,7 @@ public final class ATouchOfWickedness {
         WickedKills.register(modBus);
         KindActs.register();
         BailiffContent.register(modBus);
+        Seizable.register(modBus);
         WickednessItems.register(modBus);
         WickednessCommand.register();
         WickednessTab.register(modBus);
