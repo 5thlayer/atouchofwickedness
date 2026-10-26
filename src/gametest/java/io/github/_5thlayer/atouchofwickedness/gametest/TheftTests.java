@@ -64,10 +64,17 @@ final class TheftTests {
         var inventory = player.getInventory();
         inventory.setItem(4, new ItemStack(Items.DIAMOND_SWORD));
         inventory.setSelectedSlot(4);
+        player.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+        player.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.SHIELD));
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         Bailiffs.hit(helper, bailiff, player);
         if (!inventory.getItem(4).is(Items.DIAMOND_SWORD)) {
             helper.fail("the Bailiff took the player's only stack, the held item");
+            return;
+        }
+        if (!player.getItemBySlot(EquipmentSlot.HEAD).is(Items.IRON_HELMET)
+                || !player.getItemBySlot(EquipmentSlot.OFFHAND).is(Items.SHIELD)) {
+            helper.fail("with only the held item to take, the Bailiff took the player's armour or off hand");
             return;
         }
         helper.succeed();

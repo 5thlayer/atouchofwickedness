@@ -35,7 +35,8 @@ import org.jspecify.annotations.Nullable;
  * at random from their main inventory or hotbar, never the held item, their worn armour or off
  * hand. Once it has taken its quota, or its time on site is up, it flees faster than a sprinting
  * player, and a few seconds out of its player's sight it vanishes with what it carries. Killed, it
- * drops everything it stole and a few Seals. It is never saved, so a visit never outlasts the server.
+ * drops everything it stole and a few Seals. It is never saved, so a visit never outlasts the
+ * server.
  */
 public final class Bailiff extends PathfinderMob {
 

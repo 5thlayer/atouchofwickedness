@@ -32,7 +32,6 @@ final class FleeTests {
 
     private static void afterFiveStacks(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        // Off slot 0, the held one.
         for (int slot = 1; slot <= 7; slot++) {
             player.getInventory().setItem(slot, new ItemStack(Items.COBBLESTONE, slot));
         }
