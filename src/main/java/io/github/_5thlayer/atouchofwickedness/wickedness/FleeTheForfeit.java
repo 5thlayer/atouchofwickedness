@@ -39,7 +39,7 @@ public final class FleeTheForfeit extends AvoidEntityGoal<Player> {
         });
     }
 
-    /** As vanilla's, but finding the player by {@link #forfeitInSight}. */
+    /** As vanilla's, but never for a tamed animal, and finding the player by {@link #forfeitInSight}. */
     @Override
     public boolean canUse() {
         if (mob instanceof OwnableEntity ownable && ownable.getOwnerReference() != null) {

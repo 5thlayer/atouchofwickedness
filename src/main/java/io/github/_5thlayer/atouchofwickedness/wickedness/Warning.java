@@ -18,19 +18,19 @@ public final class Warning {
     }
 
     /**
-     * A band's Warnings.
+     * How a band's Warnings sound.
      *
      * @param interval the ticks between them
      * @param distance how far from the player, in blocks, they sound
      */
-    public record Band(long interval, double distance) {
+    public record Sounding(long interval, double distance) {
     }
 
     /** The Warnings of each band but Clean, which has none. */
-    public record Rules(Band marked, Band overdue, Band forfeit) {
+    public record Rules(Sounding marked, Sounding overdue, Sounding forfeit) {
 
         /** @return the Warnings of {@code standing}, which is not Clean */
-        public Band of(Standing standing) {
+        Sounding of(Standing standing) {
             return switch (standing) {
                 case CLEAN -> throw new IllegalArgumentException("a Clean player hears no Warning");
                 case MARKED -> marked;

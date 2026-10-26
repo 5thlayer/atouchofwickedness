@@ -243,9 +243,9 @@ public final class WickednessConfig {
 
     public static Warning.Rules warningRules() {
         return new Warning.Rules(
-                new Warning.Band(SECONDS_BETWEEN_MARKED.getAsInt() * 20L, MARKED_DISTANCE.getAsInt()),
-                new Warning.Band(SECONDS_BETWEEN_OVERDUE.getAsInt() * 20L, OVERDUE_DISTANCE.getAsInt()),
-                new Warning.Band(SECONDS_BETWEEN_FORFEIT.getAsInt() * 20L, FORFEIT_DISTANCE.getAsInt()));
+                new Warning.Sounding(SECONDS_BETWEEN_MARKED.getAsInt() * 20L, MARKED_DISTANCE.getAsInt()),
+                new Warning.Sounding(SECONDS_BETWEEN_OVERDUE.getAsInt() * 20L, OVERDUE_DISTANCE.getAsInt()),
+                new Warning.Sounding(SECONDS_BETWEEN_FORFEIT.getAsInt() * 20L, FORFEIT_DISTANCE.getAsInt()));
     }
 
     public static int fleeRadius() {

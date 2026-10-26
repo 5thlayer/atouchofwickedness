@@ -45,7 +45,10 @@ public final class WarningSounds {
         SOUNDS.register(modBus);
     }
 
-    /** Plays the Warning of {@code standing}, which is not Clean, to the player alone, {@code distance} blocks off in a random direction. */
+    /**
+     * Plays the Warning of {@code standing}, which is not Clean, to the player alone, {@code distance}
+     * blocks off in a random direction.
+     */
     static void play(ServerPlayer player, Standing standing, double distance) {
         var random = player.getRandom();
         double angle = random.nextDouble() * Math.TAU;

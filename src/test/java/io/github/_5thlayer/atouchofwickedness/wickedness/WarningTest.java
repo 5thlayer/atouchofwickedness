@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 class WarningTest {
 
     private static final Warning.Rules RULES = new Warning.Rules(
-            new Warning.Band(2_400, 24), new Warning.Band(1_200, 12), new Warning.Band(600, 4));
+            new Warning.Sounding(2_400, 24), new Warning.Sounding(1_200, 12), new Warning.Sounding(600, 4));
 
     @Test
     void cleanNeverWarns() {
