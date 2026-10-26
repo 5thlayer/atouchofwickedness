@@ -32,10 +32,10 @@ import org.jspecify.annotations.Nullable;
 /**
  * The creature that comes for a player whose Wickedness reached their Threshold, to rob them rather
  * than kill them (ADR 0004). It goes for its player, and each of its hits that lands takes one stack
- * at random from their main inventory or hotbar, never their worn armour or off hand. Once it has
- * taken its quota, or its time on site is up, it flees faster than a sprinting player, and a few
- * seconds out of its player's sight it vanishes with what it carries. Killed, it drops everything
- * it stole and a few Seals. It is never saved, so a visit never outlasts the server.
+ * at random from their main inventory or hotbar, never the held item, their worn armour or off
+ * hand. Once it has taken its quota, or its time on site is up, it flees faster than a sprinting
+ * player, and a few seconds out of its player's sight it vanishes with what it carries. Killed, it
+ * drops everything it stole and a few Seals. It is never saved, so a visit never outlasts the server.
  */
 public final class Bailiff extends PathfinderMob {
 
@@ -138,12 +138,16 @@ public final class Bailiff extends PathfinderMob {
         return landed;
     }
 
-    /** Takes one stack at random from the main inventory or hotbar, the held item included. */
+    /**
+     * Takes one stack at random from the main inventory or hotbar, never the held item: the one in
+     * the selected slot as the hit lands, so the player keeps what they fight with.
+     */
     private void steal(ServerPlayer target) {
-        var items = target.getInventory().getNonEquipmentItems();
+        var inventory = target.getInventory();
+        var items = inventory.getNonEquipmentItems();
         var filled = new ArrayList<Integer>();
         for (int slot = 0; slot < items.size(); slot++) {
-            if (!items.get(slot).isEmpty()) {
+            if (slot != inventory.getSelectedSlot() && !items.get(slot).isEmpty()) {
                 filled.add(slot);
             }
         }
@@ -151,8 +155,8 @@ public final class Bailiff extends PathfinderMob {
             return;
         }
         int slot = filled.get(getRandom().nextInt(filled.size()));
-        stolen.add(target.getInventory().removeItemNoUpdate(slot));
-        target.getInventory().setChanged();
+        stolen.add(inventory.removeItemNoUpdate(slot));
+        inventory.setChanged();
         quota.take();
         if (quota.isMet()) {
             flee();

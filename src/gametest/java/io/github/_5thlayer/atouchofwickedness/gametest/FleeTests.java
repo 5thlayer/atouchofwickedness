@@ -32,8 +32,9 @@ final class FleeTests {
 
     private static void afterFiveStacks(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        for (int slot = 0; slot < 7; slot++) {
-            player.getInventory().setItem(slot, new ItemStack(Items.COBBLESTONE, slot + 1));
+        // Off slot 0, the held one.
+        for (int slot = 1; slot <= 7; slot++) {
+            player.getInventory().setItem(slot, new ItemStack(Items.COBBLESTONE, slot));
         }
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         for (int hit = 1; hit <= 4; hit++) {
@@ -77,8 +78,8 @@ final class FleeTests {
 
     private static void vanishes(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        for (int slot = 0; slot < 5; slot++) {
-            player.getInventory().setItem(slot, new ItemStack(Items.DIAMOND, slot + 1));
+        for (int slot = 1; slot <= 5; slot++) {
+            player.getInventory().setItem(slot, new ItemStack(Items.DIAMOND, slot));
         }
         Bailiff bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         for (int hit = 1; hit <= 5; hit++) {
