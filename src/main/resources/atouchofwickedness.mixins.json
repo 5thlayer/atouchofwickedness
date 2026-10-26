@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "io.github._5thlayer.atouchofwickedness.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "minVersion": "0.8",
+  "mixins": [
+    "LivingEntityPickupMixin",
+    "ZombieVillagerAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

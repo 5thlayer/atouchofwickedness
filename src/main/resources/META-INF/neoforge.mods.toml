@@ -28,3 +28,5 @@ versionRange = "[${minecraft_version}]"
 ordering = "NONE"
 side = "BOTH"
 
+[[mixins]]
+config = "${mod_id}.mixins.json"

@@ -60,7 +60,8 @@ public final class ATouchOfWickednessGameTests {
     private static void registerTests(RegisterGameTestsEvent event) {
         // Registered rather than borrowed, since the event hands out no lookup for vanilla's.
         var environment = event.registerEnvironment(id("default"), new TestEnvironmentDefinition.AllOf(List.of()));
-        var tests = new Registrar(event, environment);
+        var ownBatch = event.registerEnvironment(id("own_batch"), new TestEnvironmentDefinition.AllOf(List.of()));
+        var tests = new Registrar(event, environment, ownBatch);
         LoadTests.register(tests);
         CreativeTabTests.register(tests);
         WickedKillTests.register(tests);
@@ -72,19 +73,33 @@ public final class ATouchOfWickednessGameTests {
         DropTests.register(tests);
         TallyStickTests.register(tests);
         CommandTests.register(tests);
+        WayBackTests.register(tests);
     }
 
     private static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(ATouchOfWickedness.MOD_ID, path);
     }
 
-    /** What a test class is handed: a name, a tick budget and a body per test. */
-    record Registrar(RegisterGameTestsEvent event, Holder<TestEnvironmentDefinition<?>> environment) {
+    /**
+     * What a test class is handed: a name, a tick budget and a body per test. A batch's tests run
+     * together, and the batches one after another, each of its own environment.
+     */
+    record Registrar(RegisterGameTestsEvent event, Holder<TestEnvironmentDefinition<?>> environment,
+            Holder<TestEnvironmentDefinition<?>> ownBatch) {
 
         void test(String name, int maxTicks, Consumer<GameTestHelper> body) {
+            register(name, maxTicks, environment, body);
+        }
+
+        /** A test that runs after the others, such as one that moves the world's clock, which every test's players read. */
+        void testInOwnBatch(String name, int maxTicks, Consumer<GameTestHelper> body) {
+            register(name, maxTicks, ownBatch, body);
+        }
+
+        private void register(String name, int maxTicks, Holder<TestEnvironmentDefinition<?>> batch, Consumer<GameTestHelper> body) {
             var id = id(name);
             CodeGameTest.define(id, body);
-            event.registerTest(id, new CodeGameTest(id, new TestData<>(environment, PLATFORM, maxTicks, 0, true, Rotation.NONE)));
+            event.registerTest(id, new CodeGameTest(id, new TestData<>(batch, PLATFORM, maxTicks, 0, true, Rotation.NONE)));
         }
     }
 }

@@ -20,6 +20,13 @@ public final class WickednessConfig {
     private static final ModConfigSpec.DoubleValue BABY_MULTIPLIER;
     private static final ModConfigSpec.IntValue TORMENT_WEIGHT;
     private static final ModConfigSpec.IntValue HIT_COST;
+    private static final ModConfigSpec.IntValue DECAY_PER_DAY;
+    private static final ModConfigSpec.IntValue BREEDING;
+    private static final ModConfigSpec.IntValue TAMING;
+    private static final ModConfigSpec.IntValue FEEDING_PER_HEART;
+    private static final ModConfigSpec.IntValue CURING;
+    private static final ModConfigSpec.IntValue GIFT;
+    private static final ModConfigSpec.IntValue GIFTS_PER_DAY;
     private static final ModConfigSpec.IntValue THRESHOLD_MIN;
     private static final ModConfigSpec.IntValue THRESHOLD_MAX;
     private static final ModConfigSpec.DoubleValue MARKED;
@@ -55,6 +62,35 @@ public final class WickednessConfig {
         HIT_COST = builder
                 .comment("What each damaging hit on a creature weighing the torment weight or more adds, short of the killing blow.")
                 .defineInRange("hitCost", 3, 0, 1_000_000);
+        builder.pop();
+
+        builder.push("decay");
+        DECAY_PER_DAY = builder
+                .comment("How much Wickedness falls each in-game day, a point at a time as the day passes.",
+                        "It falls only while the player is online, and never below 0.")
+                .defineInRange("perDay", 10, 0, 1_000_000);
+        builder.pop();
+
+        builder.push("atonement");
+        BREEDING = builder
+                .comment("What breeding two animals takes off the Wickedness of the player who fed them.")
+                .defineInRange("breeding", 3, 0, 1_000_000);
+        TAMING = builder
+                .comment("What taming an animal takes off.")
+                .defineInRange("taming", 10, 0, 1_000_000);
+        FEEDING_PER_HEART = builder
+                .comment("What feeding a hurt tamed pet the player owns takes off for each whole heart it regains,",
+                        "so feeding a healthy pet takes off nothing.")
+                .defineInRange("feedingPerHeart", 1, 0, 1_000_000);
+        CURING = builder
+                .comment("What curing a zombie villager takes off.")
+                .defineInRange("curing", 40, 0, 1_000_000);
+        GIFT = builder
+                .comment("What a villager picking up food the player threw takes off.")
+                .defineInRange("gift", 2, 0, 1_000_000);
+        GIFTS_PER_DAY = builder
+                .comment("How many gifts to villagers take off Wickedness each in-game day; the rest take off nothing.")
+                .defineInRange("giftsPerDay", 5, 0, 1_000_000);
         builder.pop();
 
         builder.push("threshold");
@@ -131,6 +167,34 @@ public final class WickednessConfig {
 
     public static WickednessWeight.Rules weightRules() {
         return new WickednessWeight.Rules(TAMED_WEIGHT.getAsInt(), BABY_MULTIPLIER.getAsDouble(), TORMENT_WEIGHT.getAsInt(), HIT_COST.getAsInt());
+    }
+
+    public static int decayPerDay() {
+        return DECAY_PER_DAY.getAsInt();
+    }
+
+    public static int breeding() {
+        return BREEDING.getAsInt();
+    }
+
+    public static int taming() {
+        return TAMING.getAsInt();
+    }
+
+    public static int feedingPerHeart() {
+        return FEEDING_PER_HEART.getAsInt();
+    }
+
+    public static int curing() {
+        return CURING.getAsInt();
+    }
+
+    public static int gift() {
+        return GIFT.getAsInt();
+    }
+
+    public static int giftsPerDay() {
+        return GIFTS_PER_DAY.getAsInt();
     }
 
     public static int thresholdMin() {

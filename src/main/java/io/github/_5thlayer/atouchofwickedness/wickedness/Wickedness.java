@@ -15,6 +15,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
@@ -42,6 +43,7 @@ public final class Wickedness {
         ATTACHMENTS.register(modBus);
         // The Threshold is drawn on first join, so it is saved from then on.
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> event.getEntity().getData(TALLY));
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> event.getServer().getPlayerList().getPlayers().forEach(Wickedness::decay));
     }
 
     /** @return the player's Wickedness */
@@ -81,6 +83,39 @@ public final class Wickedness {
         if (tally.wickedness >= tally.threshold && counts(player) && Arrival.arrive(player)) {
             tally.wickedness = 0;
             tally.threshold = draw(player.getRandom());
+        }
+    }
+
+    /** Takes an Atonement of {@code amount} off the player's Wickedness, unless the player is in Creative or Spectator. */
+    public static void atone(ServerPlayer player, int amount) {
+        if (counts(player) && amount > 0) {
+            set(player, Atonement.lowered(of(player), amount));
+        }
+    }
+
+    /** Takes a gift's Atonement off the player's Wickedness, while their gifts today are under the cap. */
+    public static void gift(ServerPlayer player) {
+        if (!counts(player)) {
+            return;
+        }
+        var tally = player.getData(TALLY);
+        long today = Atonement.Gifts.dayOf(player.level().getOverworldClockTime());
+        if (tally.gifts.counts(today, WickednessConfig.giftsPerDay())) {
+            tally.gifts = tally.gifts.plusOne(today);
+            atone(player, WickednessConfig.gift());
+        }
+    }
+
+    /** Runs the player's Decay over the clock's ticks since it last ran, which the first tick seen only reads. */
+    private static void decay(ServerPlayer player) {
+        var tally = player.getData(TALLY);
+        long now = player.level().getOverworldClockTime();
+        long elapsed = tally.decayedAt == Tally.UNSEEN ? 0 : now - tally.decayedAt;
+        tally.decayedAt = now;
+        var decayed = Decay.over(new Decay.State(tally.wickedness, tally.decayCarry), elapsed, WickednessConfig.decayPerDay());
+        tally.decayCarry = decayed.carry();
+        if (decayed.wickedness() != tally.wickedness) {
+            set(player, decayed.wickedness());
         }
     }
 
