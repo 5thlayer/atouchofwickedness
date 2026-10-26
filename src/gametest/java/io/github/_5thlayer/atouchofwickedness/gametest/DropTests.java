@@ -10,9 +10,13 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
 
-/** A killed Bailiff drops every stack it stole, and 1 to 3 Seals. */
+/**
+ * A killed Bailiff drops every stack it stole, and 1 to 3 Seals. The stolen stacks are the player's
+ * own, so they drop even with the {@code mob_drops} rule off, which keeps the Seals.
+ */
 final class DropTests {
 
     private static final BlockPos PLAYER = new BlockPos(2, 1, 2);
@@ -23,6 +27,32 @@ final class DropTests {
 
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
         tests.test("drops_stolen_stacks_and_seals_when_killed", 20, DropTests::killed);
+        tests.test("drops_stolen_stacks_with_mob_drops_off", 20, DropTests::killedWithMobDropsOff);
+    }
+
+    private static void killedWithMobDropsOff(GameTestHelper helper) {
+        var player = Players.join(helper, PLAYER);
+        player.getInventory().setItem(0, new ItemStack(Items.LAPIS_LAZULI, 21));
+        var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
+        Bailiffs.hit(helper, bailiff, player);
+        var around = new AABB(bailiff.blockPosition()).inflate(4);
+        var rules = helper.getLevel().getGameRules();
+        // Off only within this tick, so no other test sees it.
+        rules.set(GameRules.MOB_DROPS, false, helper.getLevel().getServer());
+        try {
+            WickedKillTests.killInMelee(helper, player, bailiff);
+        } finally {
+            rules.set(GameRules.MOB_DROPS, true, helper.getLevel().getServer());
+        }
+        if (count(helper, around, Items.LAPIS_LAZULI) != 21) {
+            helper.fail("with mob_drops off the killed Bailiff dropped " + count(helper, around, Items.LAPIS_LAZULI) + " of the 21 lapis it stole");
+            return;
+        }
+        if (count(helper, around, WickednessItems.SEAL.get()) != 0) {
+            helper.fail("with mob_drops off the killed Bailiff still dropped Seals");
+            return;
+        }
+        helper.succeed();
     }
 
     private static void killed(GameTestHelper helper) {

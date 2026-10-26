@@ -161,7 +161,7 @@ public final class Bailiff extends PathfinderMob {
     @Override
     protected void dropEquipment(ServerLevel level) {
         super.dropEquipment(level);
-        // The players' own goods, so they drop whatever doMobLoot says, as a player's do on death.
+        // The players' own goods, so they drop whatever the mob_drops rule says, as a player's do on death.
         stolen.forEach(stack -> spawnAtLocation(level, stack));
         stolen.clear();
     }
