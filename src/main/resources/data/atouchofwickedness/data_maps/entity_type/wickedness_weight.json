@@ -1,0 +1,49 @@
+{
+  "values": {
+    "minecraft:cow": 2,
+    "minecraft:pig": 2,
+    "minecraft:sheep": 2,
+    "minecraft:chicken": 2,
+    "minecraft:rabbit": 2,
+    "minecraft:cod": 2,
+    "minecraft:salmon": 2,
+
+    "minecraft:mooshroom": 5,
+    "minecraft:fox": 5,
+    "minecraft:horse": 5,
+    "minecraft:donkey": 5,
+    "minecraft:mule": 5,
+    "minecraft:llama": 5,
+    "minecraft:camel": 5,
+    "minecraft:armadillo": 5,
+    "minecraft:bat": 5,
+    "minecraft:turtle": 5,
+    "minecraft:frog": 5,
+    "minecraft:goat": 5,
+    "minecraft:squid": 5,
+    "minecraft:glow_squid": 5,
+    "minecraft:sniffer": 5,
+    "minecraft:tropical_fish": 5,
+    "minecraft:pufferfish": 5,
+    "minecraft:tadpole": 5,
+    "minecraft:strider": 5,
+    "minecraft:bee": 5,
+    "minecraft:polar_bear": 5,
+
+    "minecraft:allay": 15,
+    "minecraft:axolotl": 15,
+    "minecraft:dolphin": 15,
+    "minecraft:panda": 15,
+    "minecraft:parrot": 15,
+    "minecraft:wolf": 15,
+    "minecraft:trader_llama": 15,
+    "minecraft:wandering_trader": 15,
+    "minecraft:snow_golem": 15,
+    "minecraft:iron_golem": 15,
+
+    "minecraft:villager": 30,
+
+    "minecraft:cat": 50,
+    "minecraft:ocelot": 50
+  }
+}

@@ -62,8 +62,15 @@ public final class ATouchOfWickednessGameTests {
         var environment = event.registerEnvironment(id("default"), new TestEnvironmentDefinition.AllOf(List.of()));
         var tests = new Registrar(event, environment);
         LoadTests.register(tests);
-        GameTestPackTests.register(tests);
         CreativeTabTests.register(tests);
+        WickedKillTests.register(tests);
+        ThresholdTests.register(tests);
+        ArrivalTests.register(tests);
+        TheftTests.register(tests);
+        FleeTests.register(tests);
+        DropTests.register(tests);
+        TallyStickTests.register(tests);
+        CommandTests.register(tests);
     }
 
     private static Identifier id(String path) {

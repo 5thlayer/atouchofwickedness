@@ -1,0 +1,12 @@
+{
+  "entity.bailiff.arrives": {
+    "subtitle": "subtitles.atouchofwickedness.entity.bailiff.arrives",
+    "sounds": [
+      {
+        "name": "minecraft:block.bell.use",
+        "type": "event",
+        "pitch": 0.5
+      }
+    ]
+  }
+}

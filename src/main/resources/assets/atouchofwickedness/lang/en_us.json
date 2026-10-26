@@ -1,3 +1,13 @@
 {
-  "itemGroup.atouchofwickedness": "A Touch of Wickedness"
+  "itemGroup.atouchofwickedness": "A Touch of Wickedness",
+  "item.atouchofwickedness.seal": "Seal",
+  "item.atouchofwickedness.tally_stick": "Tally Stick",
+  "entity.atouchofwickedness.bailiff": "Bailiff",
+  "subtitles.atouchofwickedness.entity.bailiff.arrives": "Bailiff arrives",
+  "atouchofwickedness.standing.clean": "Your tally reads: Clean",
+  "atouchofwickedness.standing.marked": "Your tally reads: Marked",
+  "atouchofwickedness.standing.overdue": "Your tally reads: Overdue",
+  "atouchofwickedness.standing.forfeit": "Your tally reads: Forfeit",
+  "commands.atouchofwickedness.wickedness": "%s has %s Wickedness",
+  "commands.atouchofwickedness.threshold": "%s's Threshold is %s"
 }

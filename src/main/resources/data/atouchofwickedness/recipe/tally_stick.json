@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "atouchofwickedness:seal",
+    "minecraft:stick"
+  ],
+  "result": {
+    "id": "atouchofwickedness:tally_stick"
+  }
+}
