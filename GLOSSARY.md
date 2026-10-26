@@ -25,12 +25,28 @@ _Avoid_: Core, base mod, library
 ### Wickedness
 
 **Wickedness**:
-A per-player amount of harm done to creatures that posed no threat; the player never sees it as a number on the HUD, only through warnings and what reads it.
+A per-player amount of harm done to creatures that posed no threat, by killing or by beating the defenceless; the player never sees it as a number on the HUD, only through warnings and what reads it.
 _Avoid_: Naughtiness (Klei's name), karma, sin, a meter (it isn't drawn)
 
 **Wicked kill**:
 The death of a non-hostile creature credited to a player, which adds that creature's weight to the player's Wickedness.
 _Avoid_: crime, sin, bad deed
+
+**Threshold**:
+The hidden Wickedness at which the Bailiff comes for a player, drawn anew at random after each visit, so no one knows exactly how far they can push.
+_Avoid_: limit, max Wickedness
+
+**Atonement**:
+A kind act that lowers a player's Wickedness at once: breeding animals, taming one, healing a pet, curing a zombie villager or gifting a villager food.
+_Avoid_: forgiveness, redemption, Decay (the slow fall over time)
+
+**Warning**:
+A sign, heard or seen in the world, that a player's Wickedness is nearing the Threshold, growing stronger as it does.
+_Avoid_: omen (vanilla's Bad Omen), alert
+
+**Bailiff**:
+The creature that comes for a player whose Wickedness has crossed the Threshold, to seize their goods rather than to kill them.
+_Avoid_: Krampus (Klei's name), punisher, Jack-o'-lantern (a vanilla block)
 
 **Decay**:
 The slow, steady fall of Wickedness over time, so a modest rate of killing, such as farming, never adds up.
