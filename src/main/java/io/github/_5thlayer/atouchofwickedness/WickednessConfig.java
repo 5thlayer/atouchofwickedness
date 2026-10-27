@@ -3,6 +3,7 @@
 
 package io.github._5thlayer.atouchofwickedness;
 
+import io.github._5thlayer.atouchofwickedness.bailiff.Value;
 import io.github._5thlayer.atouchofwickedness.wickedness.Atonement;
 import io.github._5thlayer.atouchofwickedness.wickedness.Standing;
 import io.github._5thlayer.atouchofwickedness.wickedness.Warning;
@@ -12,7 +13,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 /**
  * The Pillar's common config, {@code atouchofwickedness-common.toml}: every number of the loop, each a
  * starting value to tune in play (suite ADR-0001). The creatures' weights are not here: they are the
- * {@code atouchofwickedness:wickedness_weight} data map, so a pack weighs modded creatures too.
+ * {@code atouchofwickedness:wickedness_weight} data map, so a pack weighs modded creatures too, and the
+ * items' Values the {@code atouchofwickedness:bailiff_value} one.
  */
 public final class WickednessConfig {
 
@@ -55,6 +57,9 @@ public final class WickednessConfig {
     private static final ModConfigSpec.IntValue CONTAINERS_REMEMBERED;
     private static final ModConfigSpec.IntValue ROBBING_RADIUS;
     private static final ModConfigSpec.IntValue PICKUP_RADIUS;
+    private static final ModConfigSpec.IntValue UNLISTED_VALUE;
+    private static final ModConfigSpec.IntValue VALUE_PER_ENCHANTMENT_LEVEL;
+    private static final ModConfigSpec.IntValue PICKUP_FLOOR;
     private static final ModConfigSpec.IntValue SECONDS_ON_SITE;
     private static final ModConfigSpec.IntValue VANISH_DISTANCE;
     private static final ModConfigSpec.IntValue SECONDS_TO_TELEPORT;
@@ -206,6 +211,19 @@ public final class WickednessConfig {
                 .comment("How near, in blocks, an item lying on the ground must be for a Bailiff with nothing yet to go",
                         "for it and take it as its haul, its dead player's drops included. 0 is never.")
                 .defineInRange("pickupRadius", 6, 0, 32);
+        UNLISTED_VALUE = builder
+                .comment("What an item the atouchofwickedness:bailiff_value data map doesn't list is worth to the Bailiff,",
+                        "which draws the stack it takes weighted by what each is worth: its items' Value times its count.",
+                        "0 is never taken.")
+                .defineInRange("unlistedValue", 1, 0, 1_000_000);
+        VALUE_PER_ENCHANTMENT_LEVEL = builder
+                .comment("What each level of an item's enchantments, a book's stored ones included, adds to its Value.",
+                        "An item worth nothing stays worth nothing.")
+                .defineInRange("valuePerEnchantmentLevel", 20, 0, 1_000_000);
+        PICKUP_FLOOR = builder
+                .comment("The least an item lying on the ground must be worth, each and its enchantments included, for a",
+                        "Bailiff to go for it, so junk dropped in front of it buys nothing.")
+                .defineInRange("pickupFloor", 5, 0, 1_000_000);
         SECONDS_ON_SITE = builder
                 .comment("How many seconds after it arrives a Bailiff flees, whatever it has taken.")
                 .defineInRange("secondsOnSite", 60, 1, 3600);
@@ -325,6 +343,10 @@ public final class WickednessConfig {
 
     public static int pickupRadius() {
         return PICKUP_RADIUS.getAsInt();
+    }
+
+    public static Value.Rules valueRules() {
+        return new Value.Rules(UNLISTED_VALUE.getAsInt(), VALUE_PER_ENCHANTMENT_LEVEL.getAsInt(), PICKUP_FLOOR.getAsInt());
     }
 
     public static int ticksOnSite() {

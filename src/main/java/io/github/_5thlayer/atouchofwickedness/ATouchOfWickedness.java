@@ -4,6 +4,7 @@
 package io.github._5thlayer.atouchofwickedness;
 
 import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
+import io.github._5thlayer.atouchofwickedness.bailiff.ItemValues;
 import io.github._5thlayer.atouchofwickedness.bailiff.Seizable;
 import io.github._5thlayer.atouchofwickedness.strongbox.Strongbox;
 import io.github._5thlayer.atouchofwickedness.wickedness.KindActs;
@@ -40,6 +41,7 @@ public final class ATouchOfWickedness {
         KindActs.register();
         BailiffContent.register(modBus);
         Seizable.register(modBus);
+        ItemValues.register(modBus);
         Strongbox.register(modBus);
         WickednessItems.register(modBus);
         WickednessCommand.register();

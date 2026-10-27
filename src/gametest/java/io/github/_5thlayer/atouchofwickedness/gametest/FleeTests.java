@@ -35,7 +35,7 @@ final class FleeTests {
 
     private static void afterOneStack(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        Players.stock(player, new ItemStack(Items.COBBLESTONE, 1), new ItemStack(Items.COBBLESTONE, 2));
+        Players.stock(player, new ItemStack(Items.COAL, 1), new ItemStack(Items.COAL, 2));
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         Bailiffs.hit(helper, bailiff, player);
         if (bailiff.isFleeing()) {

@@ -56,13 +56,15 @@ import org.jspecify.annotations.Nullable;
  * The creature that comes for a player whose Wickedness reached their Threshold, to rob them rather
  * than kill them (ADR 0004). With Seizable containers its player opened near where it arrived, it
  * robs the base: it walks to the nearest, opens it as a player would, lid and sound, and takes one
- * stack at random from it, or moves on to the next when it is empty (ADR 0003). That one stack is
- * its haul: it walks up to its player, shakes its head at them mocking, and flees. With nothing to
- * rob it mugs its player instead: it goes for them, and its first hit that lands takes one stack at
- * random from their main inventory or hotbar, never the held item, their worn armour or off hand,
- * and it goes to taunt them. A player with nothing it may take it taunts at once, empty-handed.
- * Until it has its haul, an item lying near it, its dead player's drops included, is its haul too:
- * it walks to it and picks it up. On Peaceful its hits deal nothing and still steal, though not
+ * stack from it, or moves on to the next when it holds nothing worth taking (ADR 0003). That one
+ * stack is its haul: it walks up to its player, shakes its head at them mocking, and flees. With
+ * nothing to rob it mugs its player instead: it goes for them, and its first hit that lands takes
+ * one stack from their main inventory or hotbar, never the held item, their worn armour or off
+ * hand, and it goes to taunt them. A player with nothing worth taking it taunts at once,
+ * empty-handed. Whichever stack it takes it draws by Value ({@link ItemValues}): each as likely as
+ * its share of what all those it may take are worth, so never one worth nothing. Until it has its
+ * haul, an item lying near it worth going for, its dead player's drops included, is its haul too:
+ * it walks to the nearest and picks it up; junk on the ground it leaves. On Peaceful its hits deal nothing and still steal, though not
  * through a shield its player blocks with.
  * Arriving at night, it lies down where it arrived and sleeps until dawn under rising Zs, harmless:
  * the first hit on it deals double damage and wakes it, and its time on site starts as it wakes. A
@@ -407,7 +409,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     }
 
     /**
-     * Takes one stack at random from the main inventory or hotbar, never the held item: the one in
+     * Takes one stack by Value from the main inventory or hotbar, never the held item: the one in
      * the selected slot as the hit lands, so the player keeps what they fight with.
      */
     private void steal(ServerPlayer target) {
@@ -415,9 +417,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         take(inventory, inventory.getNonEquipmentItems().size(), held(inventory));
     }
 
-    /** @return whether the inventory holds a stack the Bailiff may take */
+    /** @return whether the inventory holds a stack the Bailiff may take and that is worth taking */
     private static boolean hasTakeable(Inventory inventory) {
-        return !filled(inventory, inventory.getNonEquipmentItems().size(), held(inventory)).isEmpty();
+        return Value.draw(worth(inventory, inventory.getNonEquipmentItems().size(), held(inventory)), 0) >= 0;
     }
 
     /** @return the inventory's selected slot, which the Bailiff never takes from */
@@ -426,31 +428,33 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     }
 
     /**
-     * Takes one stack at random from the first {@code slots} of {@code container}, but none that
+     * Takes one stack by Value from the first {@code slots} of {@code container}, but none that
      * {@code kept} keeps.
      *
-     * @return whether there was a stack to take
+     * @return whether there was a stack worth taking
      */
     private boolean take(Container container, int slots, IntPredicate kept) {
-        var filled = filled(container, slots, kept);
-        if (filled.isEmpty()) {
+        int slot = Value.draw(worth(container, slots, kept), getRandom().nextDouble());
+        if (slot < 0) {
             return false;
         }
-        int slot = filled.get(getRandom().nextInt(filled.size()));
         stolen.add(container.removeItemNoUpdate(slot));
         container.setChanged();
         return true;
     }
 
-    /** @return the slots among the first {@code slots} of {@code container} that hold a stack and {@code kept} doesn't keep */
-    private static List<Integer> filled(Container container, int slots, IntPredicate kept) {
-        var filled = new ArrayList<Integer>();
+    /**
+     * @return what each of the first {@code slots} of {@code container} is worth to the Bailiff, by
+     *         slot, nothing for one empty or that {@code kept} keeps
+     */
+    private static long[] worth(Container container, int slots, IntPredicate kept) {
+        var worth = new long[slots];
         for (int slot = 0; slot < slots; slot++) {
-            if (!kept.test(slot) && !container.getItem(slot).isEmpty()) {
-                filled.add(slot);
+            if (!kept.test(slot)) {
+                worth[slot] = ItemValues.of(container.getItem(slot));
             }
         }
-        return filled;
+        return worth;
     }
 
     private void flee() {
@@ -681,8 +685,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     }
 
     /**
-     * Until it has its haul, walks to the nearest item lying near it, and picks it up once it can,
-     * before robbing, mugging or taunting. One it can't reach and pick up in ten
+     * Until it has its haul, walks to the nearest item lying near it worth going for, and picks it
+     * up once it can, before robbing, mugging or taunting. One it can't reach and pick up in ten
      * seconds it leaves.
      */
     private final class Gather extends Goal {
@@ -702,7 +706,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
                 return false;
             }
             item = level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(WickednessConfig.pickupRadius()),
-                            loose -> loose.isAlive() && !loose.getItem().isEmpty() && !outOfReach.contains(loose))
+                            loose -> loose.isAlive() && ItemValues.worthPickingUp(loose.getItem()) && !outOfReach.contains(loose))
                     .stream().min(Comparator.comparingDouble(Bailiff.this::distanceToSqr)).orElse(null);
             return item != null;
         }
