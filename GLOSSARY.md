@@ -45,12 +45,16 @@ A sign, heard or seen in the world, that a player's Wickedness is nearing the Th
 _Avoid_: omen (vanilla's Bad Omen), alert
 
 **Bailiff**:
-The creature that comes for a player whose Wickedness has crossed the Threshold, to seize their goods rather than to kill them: one stack, from a container the player has opened or else from the player, or an item lying near it, such as the player's drops; one that leaves with nothing leaves the player at their Threshold, owing.
+The creature that comes for a player whose Wickedness has crossed the Threshold, to seize their goods rather than to kill them: one stack, likelier the higher its Value, from a container the player has opened or else from the player, or an item worth taking lying near it, such as the player's drops; one that leaves with nothing leaves the player at their Threshold, owing.
 _Avoid_: Krampus (Klei's name), punisher, Jack-o'-lantern (a vanilla block)
 
 **Seizable**:
 A container the Bailiff may rob, such as a chest or a barrel, but only one its player has opened; an ender chest or a shulker box never is.
 _Avoid_: lootable, unlocked
+
+**Value**:
+What an item is worth to the Bailiff, so a stack is worth its Value times its count and the dearer a stack, the likelier it is the one taken; an item a pack hasn't valued is worth a little, and one valued at nothing is never taken.
+_Avoid_: price, worth, weight (a creature's, for Wickedness)
 
 **Seal**:
 The material a killed Bailiff leaves, from which this Pillar crafts, so wickedness is sometimes chosen.
