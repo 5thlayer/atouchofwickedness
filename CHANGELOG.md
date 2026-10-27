@@ -24,5 +24,6 @@ Written for Consumers: what a mod building against A Touch of Wickedness can use
 - Every number of the loop is in the common config, `atouchofwickedness-common.toml`.
 - With Jade installed, looking at a Bailiff shows the player it came for and the stacks it has taken, and nothing of anyone's Wickedness. Jade is optional, and the Pillar plays without it (#13).
 - A killed Bailiff now and then drops a Bailiff's Bag, a bundle that holds four times what a bundle holds, filled and emptied as one is, with a bar and a tooltip that read its fill against its own size. The chance is 5%, `bagChance` in the common config, and each level of Looting on its killer's weapon adds 1%, `bagChancePerLootingLevel`. The Bag is in the creative tab, and it isn't a bundle to dye (#10).
+- Each villager within 16 blocks who can see a Wicked kill gains vanilla's minor negative gossip about the killer, 5 times the kill's weight, so a cow adds 10 and a villager 150: their prices rise, and once the gossip is bad enough iron golems turn on the killer by vanilla's own rules. The radius and the scale are `gossip.radius` and `gossip.scale` in the common config (#11).
 
 - The Pillar has its own creative tab, "A Touch of Wickedness", and no longer nests `libworks-runtime` or fills its Works tab.

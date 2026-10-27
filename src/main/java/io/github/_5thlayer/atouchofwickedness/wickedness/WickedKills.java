@@ -21,7 +21,9 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.gossip.GossipType;
 import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
@@ -43,7 +45,8 @@ import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
  *
  * <p>The weight is the creature type's entry in the data map {@code atouchofwickedness:wickedness_weight},
  * and nothing when it has none, so a pack can weigh any creature, a modded one included; the rules of
- * {@link WickednessWeight} weigh what belongs to the creature rather than its type.
+ * {@link WickednessWeight} weigh what belongs to the creature rather than its type. Each villager who
+ * sees a Wicked kill gossips about the killer by {@link Gossip}.
  */
 public final class WickedKills {
 
@@ -93,6 +96,20 @@ public final class WickedKills {
         int weight = effectiveWeightOf(creature, player);
         if (weight > 0) {
             Wickedness.add(player, weight);
+            tellWitnesses(creature, player, weight);
+        }
+    }
+
+    /** Each villager near enough to see the kill gains minor negative gossip about {@code player}, scaled by {@code weight}. */
+    private static void tellWitnesses(LivingEntity creature, ServerPlayer player, int weight) {
+        int gossip = Gossip.about(weight, WickednessConfig.gossipScale());
+        if (gossip <= 0) {
+            return;
+        }
+        int radius = WickednessConfig.gossipRadius();
+        for (var villager : creature.level().getEntitiesOfClass(Villager.class, creature.getBoundingBox().inflate(radius),
+                villager -> villager != creature && villager.distanceTo(creature) <= radius && villager.hasLineOfSight(creature))) {
+            villager.getGossips().add(player.getUUID(), GossipType.MINOR_NEGATIVE, gossip);
         }
     }
 

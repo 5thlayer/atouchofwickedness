@@ -24,6 +24,8 @@ public final class WickednessConfig {
     private static final ModConfigSpec.DoubleValue BABY_MULTIPLIER;
     private static final ModConfigSpec.IntValue TORMENT_WEIGHT;
     private static final ModConfigSpec.IntValue HIT_COST;
+    private static final ModConfigSpec.IntValue GOSSIP_RADIUS;
+    private static final ModConfigSpec.DoubleValue GOSSIP_SCALE;
     private static final ModConfigSpec.IntValue DECAY_PER_DAY;
     private static final ModConfigSpec.IntValue BREEDING;
     private static final ModConfigSpec.IntValue TAMING;
@@ -85,6 +87,17 @@ public final class WickednessConfig {
         HIT_COST = builder
                 .comment("What each damaging hit on a creature weighing the torment weight or more adds, short of the killing blow.")
                 .defineInRange("hitCost", 3, 0, 1_000_000);
+        builder.pop();
+
+        builder.push("gossip");
+        GOSSIP_RADIUS = builder
+                .comment("How near, in blocks, a villager must be to a Wicked kill it can see to gossip about the killer.")
+                .defineInRange("radius", 16, 0, 64);
+        GOSSIP_SCALE = builder
+                .comment("How many times the kill's weight in vanilla's minor negative gossip each villager who sees it gains",
+                        "about the killer, rounded to the nearest whole number. Vanilla holds at most 200 of it, a villager",
+                        "raises its prices by it, and an iron golem turns on a player past 100. 0 is none.")
+                .defineInRange("scale", 5.0, 0, 1_000);
         builder.pop();
 
         builder.push("decay");
@@ -263,6 +276,14 @@ public final class WickednessConfig {
 
     public static WickednessWeight.Rules weightRules() {
         return new WickednessWeight.Rules(TAMED_WEIGHT.getAsInt(), BABY_MULTIPLIER.getAsDouble(), TORMENT_WEIGHT.getAsInt(), HIT_COST.getAsInt());
+    }
+
+    public static int gossipRadius() {
+        return GOSSIP_RADIUS.getAsInt();
+    }
+
+    public static double gossipScale() {
+        return GOSSIP_SCALE.getAsDouble();
     }
 
     public static int decayPerDay() {
