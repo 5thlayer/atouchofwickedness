@@ -13,8 +13,17 @@ public final class Gossip {
     private Gossip() {
     }
 
+    /**
+     * The numbers of the gossip.
+     *
+     * @param radius  how near, in blocks, a villager who sees a kill must be to it to gossip
+     * @param scale   how many times the kill's effective weight each such villager gains
+     */
+    public record Rules(int radius, double scale) {
+    }
+
     /** @return the minor negative gossip a villager who sees a kill of effective weight {@code weight} gains */
-    public static int about(int weight, double scale) {
-        return (int) Math.min(Integer.MAX_VALUE, Math.round(weight * scale));
+    public static int of(int weight, Rules rules) {
+        return (int) Math.min(Integer.MAX_VALUE, Math.round(weight * rules.scale()));
     }
 }

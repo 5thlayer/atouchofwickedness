@@ -5,6 +5,7 @@ package io.github._5thlayer.atouchofwickedness;
 
 import io.github._5thlayer.atouchofwickedness.bailiff.Value;
 import io.github._5thlayer.atouchofwickedness.wickedness.Atonement;
+import io.github._5thlayer.atouchofwickedness.wickedness.Gossip;
 import io.github._5thlayer.atouchofwickedness.wickedness.Standing;
 import io.github._5thlayer.atouchofwickedness.wickedness.Warning;
 import io.github._5thlayer.atouchofwickedness.wickedness.WickednessWeight;
@@ -96,7 +97,7 @@ public final class WickednessConfig {
         GOSSIP_SCALE = builder
                 .comment("How many times the kill's weight in vanilla's minor negative gossip each villager who sees it gains",
                         "about the killer, rounded to the nearest whole number. Vanilla holds at most 200 of it, a villager",
-                        "raises its prices by it, and an iron golem turns on a player past 100. 0 is none.")
+                        "raises its prices by it, and an iron golem turns on a player at 100. 0 is none.")
                 .defineInRange("scale", 5.0, 0, 1_000);
         builder.pop();
 
@@ -278,12 +279,8 @@ public final class WickednessConfig {
         return new WickednessWeight.Rules(TAMED_WEIGHT.getAsInt(), BABY_MULTIPLIER.getAsDouble(), TORMENT_WEIGHT.getAsInt(), HIT_COST.getAsInt());
     }
 
-    public static int gossipRadius() {
-        return GOSSIP_RADIUS.getAsInt();
-    }
-
-    public static double gossipScale() {
-        return GOSSIP_SCALE.getAsDouble();
+    public static Gossip.Rules gossipRules() {
+        return new Gossip.Rules(GOSSIP_RADIUS.getAsInt(), GOSSIP_SCALE.getAsDouble());
     }
 
     public static int decayPerDay() {

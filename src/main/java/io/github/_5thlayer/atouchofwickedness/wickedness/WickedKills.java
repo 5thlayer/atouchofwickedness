@@ -102,11 +102,13 @@ public final class WickedKills {
 
     /** Each villager near enough to see the kill gains minor negative gossip about {@code player}, scaled by {@code weight}. */
     private static void tellWitnesses(LivingEntity creature, ServerPlayer player, int weight) {
-        int gossip = Gossip.about(weight, WickednessConfig.gossipScale());
+        var rules = WickednessConfig.gossipRules();
+        int gossip = Gossip.of(weight, rules);
         if (gossip <= 0) {
             return;
         }
-        int radius = WickednessConfig.gossipRadius();
+        int radius = rules.radius();
+        // A killed villager is no witness to its own death.
         for (var villager : creature.level().getEntitiesOfClass(Villager.class, creature.getBoundingBox().inflate(radius),
                 villager -> villager != creature && villager.distanceTo(creature) <= radius && villager.hasLineOfSight(creature))) {
             villager.getGossips().add(player.getUUID(), GossipType.MINOR_NEGATIVE, gossip);

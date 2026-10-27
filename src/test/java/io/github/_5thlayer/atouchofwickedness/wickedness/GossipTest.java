@@ -5,6 +5,7 @@ package io.github._5thlayer.atouchofwickedness.wickedness;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.github._5thlayer.atouchofwickedness.wickedness.Gossip.Rules;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -13,35 +14,34 @@ import org.junit.jupiter.api.Test;
  */
 class GossipTest {
 
-    @Test
-    void aKillAddsItsWeightTimesTheScale() {
-        assertEquals(10, Gossip.about(2, 5.0));
-        assertEquals(150, Gossip.about(30, 5.0));
+    private static Rules rules(double scale) {
+        return new Rules(16, scale);
     }
 
     @Test
-    void aHeavierKillAddsMore() {
-        assertEquals(25, Gossip.about(5, 5.0));
+    void aKillAddsItsWeightTimesTheScale() {
+        assertEquals(10, Gossip.of(2, rules(5.0)));
+        assertEquals(150, Gossip.of(30, rules(5.0)));
     }
 
     @Test
     void theGossipIsRoundedToTheNearestWholeNumber() {
-        assertEquals(3, Gossip.about(2, 1.25));
-        assertEquals(2, Gossip.about(2, 1.2));
+        assertEquals(3, Gossip.of(2, rules(1.25)));
+        assertEquals(2, Gossip.of(2, rules(1.2)));
     }
 
     @Test
     void aWeightlessKillAddsNothing() {
-        assertEquals(0, Gossip.about(0, 5.0));
+        assertEquals(0, Gossip.of(0, rules(5.0)));
     }
 
     @Test
     void aScaleOfNothingAddsNothing() {
-        assertEquals(0, Gossip.about(30, 0));
+        assertEquals(0, Gossip.of(30, rules(0)));
     }
 
     @Test
     void theGossipNeverOverflows() {
-        assertEquals(Integer.MAX_VALUE, Gossip.about(Integer.MAX_VALUE, 100));
+        assertEquals(Integer.MAX_VALUE, Gossip.of(Integer.MAX_VALUE, rules(100)));
     }
 }
