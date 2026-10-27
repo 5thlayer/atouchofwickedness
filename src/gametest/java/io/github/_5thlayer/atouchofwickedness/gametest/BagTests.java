@@ -3,6 +3,8 @@
 
 package io.github._5thlayer.atouchofwickedness.gametest;
 
+import java.util.List;
+
 import io.github._5thlayer.atouchofwickedness.WickednessItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -19,7 +21,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  * A killed Bailiff drops a Bailiff's Bag at the {@code bagChance} in the common config, which the test
  * forces to 1; the chance itself and its Looting bonus are vanilla's condition, read in review. The Bag
  * fills to four times what a bundle holds, and its bar reads its fill against that, while a bundle still
- * fills to one.
+ * fills to one. What it holds of an item tops up a stack before it starts another, as none outgrows a stack.
  */
 final class BagTests {
 
@@ -35,6 +37,7 @@ final class BagTests {
         tests.test("bag_dropped_by_a_killed_bailiff", 20, BagTests::dropped);
         tests.test("bag_holds_four_bundles", 1, BagTests::holdsFour);
         tests.test("bag_leaves_a_bundle_holding_one", 1, BagTests::bundleHoldsOne);
+        tests.test("bag_tops_up_a_stack_before_starting_another", 1, BagTests::topsUp);
     }
 
     private static void dropped(GameTestHelper helper) {
@@ -82,6 +85,23 @@ final class BagTests {
         int left = fill(player, bundle, 2);
         if (held(bundle) != 64 || left != 64) {
             helper.fail("two stacks of cobblestone put into a bundle leave " + held(bundle) + " in it and " + left + " out");
+            return;
+        }
+        helper.succeed();
+    }
+
+    private static void topsUp(GameTestHelper helper) {
+        var player = Players.join(helper, PLAYER);
+        var bag = new ItemStack(WickednessItems.BAILIFFS_BAG.get());
+        var slot = player.inventoryMenu.getSlot(FIRST_SLOT);
+        for (int count : new int[] {50, 20}) {
+            player.getInventory().setItem(FIRST_SLOT, new ItemStack(Items.COBBLESTONE, count));
+            bag.getItem().overrideStackedOnOther(bag, slot, ClickAction.PRIMARY, player);
+        }
+        var stacks = bag.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY).itemCopyStream()
+                .map(ItemStack::getCount).sorted().toList();
+        if (!stacks.equals(List.of(6, 64))) {
+            helper.fail("50 cobblestone and then 20 put into a Bag are held as stacks of " + stacks + ", not 64 and 6");
             return;
         }
         helper.succeed();

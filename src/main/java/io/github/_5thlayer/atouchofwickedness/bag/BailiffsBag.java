@@ -5,13 +5,12 @@ package io.github._5thlayer.atouchofwickedness.bag;
 
 import java.util.Optional;
 
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.inventory.tooltip.BundleTooltip;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.BundleItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BundleContents;
-import net.minecraft.world.item.component.TooltipDisplay;
 import org.apache.commons.lang3.math.Fraction;
 
 /**
@@ -36,10 +35,7 @@ public final class BailiffsBag extends BundleItem {
 
     @Override
     public Optional<TooltipComponent> getTooltipImage(ItemStack bag) {
-        TooltipDisplay display = bag.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
-        return !display.shows(DataComponents.BUNDLE_CONTENTS)
-                ? Optional.empty()
-                : Optional.ofNullable(bag.get(DataComponents.BUNDLE_CONTENTS)).map(Tooltip::new);
+        return super.getTooltipImage(bag).map(bundle -> new Tooltip(((BundleTooltip) bundle).contents()));
     }
 
     /** The Bag's tooltip, which the client draws as a bundle's with its fill read against the Bag's capacity. */
