@@ -8,12 +8,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
 /**
@@ -48,12 +45,12 @@ final class RobberyTests {
         var player = Players.join(helper, PLAYER);
         Players.stock(player, new ItemStack(Items.EMERALD, 7));
         var farther = new BlockPos(2, 1, 2);
-        stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
-        stocked(helper, farther, Blocks.BARREL, new ItemStack(Items.COAL, 5), new ItemStack(Items.COPPER_INGOT, 2));
+        Containers.stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
+        Containers.stocked(helper, farther, Blocks.BARREL, new ItemStack(Items.COAL, 5), new ItemStack(Items.COPPER_INGOT, 2));
         // Nearer the Bailiff than either, but never opened.
-        stocked(helper, BESIDE, Blocks.CHEST, new ItemStack(Items.EMERALD, 4), new ItemStack(Items.IRON_INGOT, 6));
-        open(helper, player, OPENED);
-        open(helper, player, farther);
+        Containers.stocked(helper, BESIDE, Blocks.CHEST, new ItemStack(Items.EMERALD, 4), new ItemStack(Items.IRON_INGOT, 6));
+        Containers.open(helper, player, OPENED);
+        Containers.open(helper, player, farther);
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         helper.startSequence()
                 .thenWaitUntil(() -> {
@@ -83,8 +80,8 @@ final class RobberyTests {
         var player = Players.join(helper, PLAYER);
         var other = Players.join(helper, new BlockPos(2, 1, 2));
         Players.stock(player, new ItemStack(Items.EMERALD, 7));
-        stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
-        open(helper, other, OPENED);
+        Containers.stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
+        Containers.open(helper, other, OPENED);
         Bailiffs.comeFor(helper, BAILIFF, player);
         helper.failIfEver(() -> assertStacks(helper, OPENED, 2, "the Bailiff robbed a chest another player opened"));
         helper.succeedWhen(() -> assertRobbedOf(helper, player));
@@ -95,9 +92,9 @@ final class RobberyTests {
         Players.stock(player, new ItemStack(Items.EMERALD, 7));
         player.getEnderChestInventory().setItem(0, new ItemStack(Items.LAPIS_LAZULI, 3));
         helper.setBlock(OPENED, Blocks.ENDER_CHEST);
-        stocked(helper, BESIDE, Blocks.SHULKER_BOX, new ItemStack(Items.GOLD_INGOT, 9));
-        open(helper, player, OPENED);
-        open(helper, player, BESIDE);
+        Containers.stocked(helper, BESIDE, Blocks.SHULKER_BOX, new ItemStack(Items.GOLD_INGOT, 9));
+        Containers.open(helper, player, OPENED);
+        Containers.open(helper, player, BESIDE);
         Bailiffs.comeFor(helper, BAILIFF, player);
         helper.failIfEver(() -> {
             if (player.getEnderChestInventory().getItem(0).isEmpty()) {
@@ -112,8 +109,8 @@ final class RobberyTests {
     private static void hitWhileRobbing(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
         Players.stock(player, new ItemStack(Items.EMERALD, 7));
-        stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
-        open(helper, player, OPENED);
+        Containers.stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
+        Containers.open(helper, player, OPENED);
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         var chest = helper.absolutePos(OPENED);
         helper.startSequence()
@@ -144,8 +141,8 @@ final class RobberyTests {
 
     private static void hitWhileTaunting(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
-        stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3));
-        open(helper, player, OPENED);
+        Containers.stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3));
+        Containers.open(helper, player, OPENED);
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         helper.startSequence()
                 .thenWaitUntil(() -> {
@@ -165,8 +162,8 @@ final class RobberyTests {
     private static void noneInReach(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
         Players.stock(player, new ItemStack(Items.EMERALD, 7));
-        stocked(helper, OUT_OF_REACH, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3));
-        open(helper, player, OUT_OF_REACH);
+        Containers.stocked(helper, OUT_OF_REACH, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3));
+        Containers.open(helper, player, OUT_OF_REACH);
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
         if (bailiff.isRobbing()) {
             helper.fail("the Bailiff set out to rob a chest beyond its robbing radius");
@@ -182,44 +179,14 @@ final class RobberyTests {
     private static void datapackTag(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
         // The game-test pack adds the dispenser to the tag.
-        stocked(helper, OPENED, Blocks.DISPENSER, new ItemStack(Items.ARROW, 16));
-        open(helper, player, OPENED);
+        Containers.stocked(helper, OPENED, Blocks.DISPENSER, new ItemStack(Items.ARROW, 16));
+        Containers.open(helper, player, OPENED);
         Bailiffs.comeFor(helper, BAILIFF, player);
         helper.succeedWhen(() -> assertStacks(helper, OPENED, 0, "the Bailiff has not robbed the dispenser its player opened"));
     }
 
-    /** Places {@code block} at {@code relative}, holding {@code stacks} in its first slots. */
-    private static void stocked(GameTestHelper helper, BlockPos relative, Block block, ItemStack... stacks) {
-        helper.setBlock(relative, block);
-        var container = container(helper, relative);
-        for (int slot = 0; slot < stacks.length; slot++) {
-            container.setItem(slot, stacks[slot]);
-        }
-    }
-
-    /** The player opens the block at {@code relative}, as with a right click, and closes it again. */
-    private static void open(GameTestHelper helper, ServerPlayer player, BlockPos relative) {
-        helper.useBlock(relative, player);
-        player.closeContainer();
-    }
-
-    private static Container container(GameTestHelper helper, BlockPos relative) {
-        return (Container) helper.getBlockEntity(relative, BlockEntity.class);
-    }
-
-    private static int stacksIn(GameTestHelper helper, BlockPos relative) {
-        var container = container(helper, relative);
-        int stacks = 0;
-        for (int slot = 0; slot < container.getContainerSize(); slot++) {
-            if (!container.getItem(slot).isEmpty()) {
-                stacks++;
-            }
-        }
-        return stacks;
-    }
-
     private static void assertStacks(GameTestHelper helper, BlockPos relative, int expected, String message) {
-        int stacks = stacksIn(helper, relative);
+        int stacks = Containers.stacksIn(helper, relative);
         if (stacks != expected) {
             throw helper.assertionException(message + ": it holds " + stacks + " stacks, not " + expected);
         }

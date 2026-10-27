@@ -65,6 +65,13 @@ class ValueTest {
     }
 
     @Test
+    void anyWorthIsWhetherAnyStackIsWorthSomething() {
+        assertFalse(Value.anyWorth(new long[] {}));
+        assertFalse(Value.anyWorth(new long[] {0, 0}));
+        assertTrue(Value.anyWorth(new long[] {0, 1}));
+    }
+
+    @Test
     void nothingWorthAnythingDrawsNothing() {
         assertEquals(-1, Value.draw(new long[] {}, 0.5));
         assertEquals(-1, Value.draw(new long[] {0, 0, 0}, 0.5));

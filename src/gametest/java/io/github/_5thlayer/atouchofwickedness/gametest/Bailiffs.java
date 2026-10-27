@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 /** The Bailiffs of the game tests: one sent straight to a spot, and those come for a player. */
 final class Bailiffs {
@@ -42,5 +43,14 @@ final class Bailiffs {
     /** @return how many stacks the player's main inventory and hotbar hold */
     static int stacksIn(Inventory inventory) {
         return (int) inventory.getNonEquipmentItems().stream().filter(stack -> !stack.isEmpty()).count();
+    }
+
+    /** Asserts that {@code bailiff} carries {@code expected}, all it has taken. */
+    static void assertCarries(GameTestHelper helper, Bailiff bailiff, ItemStack expected) {
+        var report = bailiff.report(helper.getLevel());
+        var carried = report == null ? List.<ItemStack>of() : report.carried();
+        if (carried.size() != 1 || !ItemStack.matches(carried.getFirst(), expected)) {
+            throw helper.assertionException("the Bailiff carries " + carried + ", not " + expected);
+        }
     }
 }

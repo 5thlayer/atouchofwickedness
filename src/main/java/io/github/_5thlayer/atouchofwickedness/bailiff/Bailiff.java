@@ -64,8 +64,8 @@ import org.jspecify.annotations.Nullable;
  * empty-handed. Whichever stack it takes it draws by Value ({@link ItemValues}): each as likely as
  * its share of what all those it may take are worth, so never one worth nothing. Until it has its
  * haul, an item lying near it worth going for, its dead player's drops included, is its haul too:
- * it walks to the nearest and picks it up; junk on the ground it leaves. On Peaceful its hits deal nothing and still steal, though not
- * through a shield its player blocks with.
+ * it walks to the nearest and picks it up; junk on the ground it leaves. On Peaceful its hits deal
+ * nothing and still steal, though not through a shield its player blocks with.
  * Arriving at night, it lies down where it arrived and sleeps until dawn under rising Zs, harmless:
  * the first hit on it deals double damage and wakes it, and its time on site starts as it wakes. A
  * player who hits it as it robs or taunts sends it fleeing at once. Once its time on site is up it
@@ -419,7 +419,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
     /** @return whether the inventory holds a stack the Bailiff may take and that is worth taking */
     private static boolean hasTakeable(Inventory inventory) {
-        return Value.draw(worth(inventory, inventory.getNonEquipmentItems().size(), held(inventory)), 0) >= 0;
+        return Value.anyWorth(worth(inventory, inventory.getNonEquipmentItems().size(), held(inventory)));
     }
 
     /** @return the inventory's selected slot, which the Bailiff never takes from */

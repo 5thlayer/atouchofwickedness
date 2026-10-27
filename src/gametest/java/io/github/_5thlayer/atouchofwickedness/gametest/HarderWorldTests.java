@@ -65,7 +65,7 @@ final class HarderWorldTests {
             if (!item.isRemoved()) {
                 throw helper.assertionException("the diamond still lies on the ground");
             }
-            assertCarries(helper, bailiff, new ItemStack(Items.DIAMOND));
+            Bailiffs.assertCarries(helper, bailiff, new ItemStack(Items.DIAMOND));
         });
     }
 
@@ -78,7 +78,7 @@ final class HarderWorldTests {
             if (bailiff.isRemoved()) {
                 throw helper.assertionException("the Bailiff left as its player died");
             }
-            assertCarries(helper, bailiff, new ItemStack(Items.EMERALD, 7));
+            Bailiffs.assertCarries(helper, bailiff, new ItemStack(Items.EMERALD, 7));
         });
     }
 
@@ -243,14 +243,5 @@ final class HarderWorldTests {
             return;
         }
         helper.succeed();
-    }
-
-    /** Asserts that {@code bailiff} carries {@code expected}, all it has taken. */
-    private static void assertCarries(GameTestHelper helper, Bailiff bailiff, ItemStack expected) {
-        var report = bailiff.report(helper.getLevel());
-        var carried = report == null ? List.<ItemStack>of() : report.carried();
-        if (carried.size() != 1 || !ItemStack.matches(carried.getFirst(), expected)) {
-            throw helper.assertionException("the Bailiff carries " + carried + ", not " + expected);
-        }
     }
 }

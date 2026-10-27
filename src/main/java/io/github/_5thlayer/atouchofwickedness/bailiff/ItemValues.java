@@ -42,7 +42,10 @@ public final class ItemValues {
 
     /** @return what each item of {@code stack} is worth to the Bailiff, its enchantments included */
     public static long perItem(ItemStack stack) {
-        var rules = WickednessConfig.valueRules();
+        return perItem(stack, WickednessConfig.valueRules());
+    }
+
+    private static long perItem(ItemStack stack, Value.Rules rules) {
         int value = Value.of(stack.getItem().builtInRegistryHolder().getData(VALUE), rules);
         int levels = levels(stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY))
                 + levels(stack.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY));
@@ -56,7 +59,8 @@ public final class ItemValues {
 
     /** @return whether {@code stack}, lying on the ground, is worth the Bailiff going for */
     public static boolean worthPickingUp(ItemStack stack) {
-        return !stack.isEmpty() && Value.worthPickingUp(perItem(stack), WickednessConfig.valueRules());
+        var rules = WickednessConfig.valueRules();
+        return !stack.isEmpty() && Value.worthPickingUp(perItem(stack, rules), rules);
     }
 
     private static int levels(ItemEnchantments enchantments) {

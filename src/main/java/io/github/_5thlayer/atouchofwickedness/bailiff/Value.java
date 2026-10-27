@@ -22,10 +22,10 @@ public final class Value {
      *
      * @param unlisted            what an item the data map doesn't list is worth
      * @param perEnchantmentLevel what each level of an item's enchantments adds to it
-     * @param looseFloor          the least an item lying on the ground must be worth, each, for the
+     * @param pickupFloor         the least an item lying on the ground must be worth, each, for the
      *                            Bailiff to go for it
      */
-    public record Rules(int unlisted, int perEnchantmentLevel, int looseFloor) {
+    public record Rules(int unlisted, int perEnchantmentLevel, int pickupFloor) {
     }
 
     /** @return the Value of an item whose data-map entry is {@code entry}, null when it has none */
@@ -48,7 +48,17 @@ public final class Value {
 
     /** @return whether an item lying on the ground, each worth {@code perItem}, is worth the Bailiff going for */
     public static boolean worthPickingUp(long perItem, Rules rules) {
-        return perItem > 0 && perItem >= rules.looseFloor();
+        return perItem > 0 && perItem >= rules.pickupFloor();
+    }
+
+    /** @return whether any of the stacks worth {@code values} is worth anything */
+    public static boolean anyWorth(long[] values) {
+        for (long value : values) {
+            if (value > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
