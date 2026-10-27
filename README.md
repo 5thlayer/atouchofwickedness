@@ -2,11 +2,15 @@
 
 ![A Touch of Wickedness](https://raw.githubusercontent.com/5thlayer/atouchofwickedness/main/publish/atouchofwickedness-cover.png)
 
-<!-- For players, written by the maintainer and never by an agent: what A Touch of Wickedness is, why it exists
-and how it feels to play. It is also the Modrinth and CurseForge description
-(docs/agents/publishing.md). The technical sections go below it. -->
+A touch of Wickedness is a mod where doing evil things is punished... but can also be farmed as a resource if you dare face the consequences of your acts.
 
-Killing harmless creatures builds Wickedness, and too much of it summons a punisher.
+Killing innocent creatures increases a hidden Wickedness stat which can also be reduced by performing specific acts such as taming and breeding animals, healing your pets or curing zombie villages. 
+
+Pushing the villain role too far spawns the Bailiff, a thief who comes for your most precious belongings. Your chest will not be safe from his wrath and even your personal possessions. 
+
+You can catch and kill him to get back what he stole and also to get a new resource, a Seal. 
+
+To pursue a career of wickedness you must protect your goodies by building unrobbable Strongboxes using Seals. Your current level of Wickedness can be hinted at by crafting a Tally Stick again using Seals.
 
 ## For pack authors
 
@@ -60,3 +64,5 @@ All optional, and none nested in the jar:
 ## Dependencies
 
 None beyond NeoForge, on Minecraft 26.1.2.
+
+This is a hobby project: I’m not monetizing any part of A touch of mods suite. I’m building it for fun, to see how far I can take it.
