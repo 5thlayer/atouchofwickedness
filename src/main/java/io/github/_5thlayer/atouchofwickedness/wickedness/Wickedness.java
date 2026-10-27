@@ -110,11 +110,14 @@ public final class Wickedness {
     }
 
     /**
-     * Leaves the player owing after a Bailiff that vanished with nothing: their Wickedness goes back
-     * up to their Threshold, at the least, so another comes once the cooldown after this one is over.
+     * Leaves the player owing after a Bailiff that left with nothing: their Wickedness goes back up
+     * to their Threshold, at the least, so another comes on a retry once the cooldown after this one
+     * is over, never at once, as for a player logging out.
      */
     public static void owe(ServerPlayer player) {
-        set(player, Math.max(of(player), threshold(player)));
+        var tally = player.getData(TALLY);
+        tally.wickedness = Math.max(tally.wickedness, tally.threshold);
+        player.setData(TALLY, tally);
     }
 
     /** Lowers the player's Wickedness by an Atonement of {@code amount}, unless the player is in Creative or Spectator. */

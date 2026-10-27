@@ -54,6 +54,7 @@ public final class WickednessConfig {
     private static final ModConfigSpec.DoubleValue BAILIFF_FLEE_SPEED;
     private static final ModConfigSpec.IntValue CONTAINERS_REMEMBERED;
     private static final ModConfigSpec.IntValue ROBBING_RADIUS;
+    private static final ModConfigSpec.IntValue PICKUP_RADIUS;
     private static final ModConfigSpec.IntValue SECONDS_ON_SITE;
     private static final ModConfigSpec.IntValue VANISH_DISTANCE;
     private static final ModConfigSpec.IntValue SECONDS_TO_TELEPORT;
@@ -201,6 +202,10 @@ public final class WickednessConfig {
         ROBBING_RADIUS = builder
                 .comment("How near, in blocks, to where it arrived a remembered container must be for the Bailiff to rob it.")
                 .defineInRange("robbingRadius", 32, 0, 128);
+        PICKUP_RADIUS = builder
+                .comment("How near, in blocks, an item lying on the ground must be for a Bailiff with nothing yet to go",
+                        "for it and take it as its haul, its dead player's drops included. 0 is never.")
+                .defineInRange("pickupRadius", 6, 0, 32);
         SECONDS_ON_SITE = builder
                 .comment("How many seconds after it arrives a Bailiff flees, whatever it has taken.")
                 .defineInRange("secondsOnSite", 60, 1, 3600);
@@ -316,6 +321,10 @@ public final class WickednessConfig {
 
     public static int robbingRadius() {
         return ROBBING_RADIUS.getAsInt();
+    }
+
+    public static int pickupRadius() {
+        return PICKUP_RADIUS.getAsInt();
     }
 
     public static int ticksOnSite() {

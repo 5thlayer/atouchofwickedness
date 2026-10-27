@@ -8,10 +8,13 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -54,5 +57,19 @@ public final class BailiffContent {
         SOUNDS.register(modBus);
         PARTICLES.register(modBus);
         modBus.addListener((EntityAttributeCreationEvent event) -> event.put(BAILIFF.get(), Bailiff.createAttributes().build()));
+        // Before the player is saved, so the debt a visit cut short leaves is saved with them.
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                Bailiff.endVisits(player.level(), player);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerChangedDimensionEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                var from = player.level().getServer().getLevel(event.getFrom());
+                if (from != null) {
+                    Bailiff.endVisits(from, player);
+                }
+            }
+        });
     }
 }

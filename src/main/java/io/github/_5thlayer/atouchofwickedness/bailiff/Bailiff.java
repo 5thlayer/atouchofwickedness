@@ -15,6 +15,7 @@ import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.WickednessItems;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -61,7 +62,8 @@ import org.jspecify.annotations.Nullable;
  * random from their main inventory or hotbar, never the held item, their worn armour or off hand,
  * and it goes to taunt them. A player with nothing it may take it taunts at once, empty-handed.
  * Until it has its haul, an item lying near it, its dead player's drops included, is its haul too:
- * it walks to it and picks it up. On Peaceful its hits deal nothing and still steal.
+ * it walks to it and picks it up. On Peaceful its hits deal nothing and still steal, though not
+ * through a shield its player blocks with.
  * Arriving at night, it lies down where it arrived and sleeps until dawn under rising Zs, harmless:
  * the first hit on it deals double damage and wakes it, and its time on site starts as it wakes. A
  * player who hits it as it robs or taunts sends it fleeing at once. Once its time on site is up it
@@ -69,8 +71,9 @@ import org.jspecify.annotations.Nullable;
  * them, or after a while however far it got, it stands still charging a teleport, when its player
  * can still kill it from afar, then vanishes with what it carries; one that vanishes with nothing
  * leaves its player owing ({@link Wickedness#owe}). Killed, it drops everything it stole and a few
- * Seals. Its player dying doesn't end the visit, but their logging out or changing dimension does,
- * and it is never saved, so a visit never outlasts the server.
+ * Seals. Its player dying doesn't end the visit, but their logging out, the server stopping included,
+ * or changing dimension does: it is gone, never saved, and leaves them owing as one that vanishes
+ * with nothing does.
  */
 public final class Bailiff extends PathfinderMob implements ContainerUser {
 
@@ -91,9 +94,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
     /** Ticks a fleeing Bailiff runs for before it charges its teleport wherever it got to, as when cornered. */
     private static final int TICKS_TO_GET_AWAY = 400;
-
-    /** How near, in blocks, an item lying on the ground must be for the Bailiff to go for it. */
-    private static final double LOOSE_RADIUS = 6;
 
     /** Ticks between the Zs a sleeping Bailiff sleeps under. */
     private static final int TICKS_BETWEEN_SNORES = 20;
@@ -269,8 +269,14 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         super.customServerAiStep(level);
         var target = target(level);
         if (target == null) {
-            // Its player left, or left the dimension: the visit is over. One who died is still here.
-            discard();
+            // Its player left, or left the dimension, as by respawning in another: the visit is
+            // over. One who died is still here.
+            var elsewhere = level.getServer().getPlayerList().getPlayer(player);
+            if (elsewhere != null) {
+                endVisit(elsewhere);
+            } else {
+                discard();
+            }
             return;
         }
         if (isAsleep()) {
@@ -318,6 +324,24 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         discard();
     }
 
+    /**
+     * Ends the visits of the Bailiffs in {@code level} come for {@code target}, who is leaving it or
+     * the server.
+     */
+    public static void endVisits(ServerLevel level, ServerPlayer target) {
+        for (Bailiff bailiff : level.getEntities(BailiffContent.BAILIFF.get(), bailiff -> bailiff.cameFor(target))) {
+            bailiff.endVisit(target);
+        }
+    }
+
+    /** Ends the visit, leaving {@code target} owing when it took nothing, as when it vanishes. */
+    private void endVisit(ServerPlayer target) {
+        if (stolen.isEmpty()) {
+            Wickedness.owe(target);
+        }
+        discard();
+    }
+
     /** @return its player, dead or alive, while they are in its level, or null once they left it */
     private @Nullable ServerPlayer target(ServerLevel level) {
         return player != null && level.getPlayerByUUID(player) instanceof ServerPlayer target ? target : null;
@@ -333,7 +357,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     public boolean doHurtTarget(ServerLevel level, Entity target) {
         boolean landed = super.doHurtTarget(level, target);
         if (!landed && level.getDifficulty() == Difficulty.PEACEFUL && target instanceof ServerPlayer hit && cameFor(hit)
-                && hit.isAlive() && !hit.isInvulnerableTo(level, damageSources().mobAttack(this))) {
+                && hit.isAlive() && !hit.isInvulnerableTo(level, damageSources().mobAttack(this))
+                && !blocks(hit)) {
             // Peaceful scales its hit to nothing, which no player takes, but theft is no damage.
             landed = true;
         }
@@ -363,6 +388,22 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             flee();
         }
         return hurt;
+    }
+
+    /**
+     * @return whether {@code target} blocks the Bailiff's hit, as with a shield raised its way, worked
+     *         out as vanilla blocks one, for a nominal hit since Peaceful's is nothing
+     */
+    private boolean blocks(ServerPlayer target) {
+        var with = target.getItemBlockingWith();
+        var blocking = with == null ? null : with.get(DataComponents.BLOCKS_ATTACKS);
+        if (blocking == null) {
+            return false;
+        }
+        var toward = position().subtract(target.position());
+        toward = new Vec3(toward.x, 0, toward.z).normalize();
+        double angle = Math.acos(toward.dot(Vec3.directionFromRotation(0, target.getYHeadRot())));
+        return blocking.resolveBlockedDamage(damageSources().mobAttack(this), 1, angle) > 0;
     }
 
     /**
@@ -660,7 +701,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             if (!wantsLoose()) {
                 return false;
             }
-            item = level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(LOOSE_RADIUS),
+            item = level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(WickednessConfig.pickupRadius()),
                             loose -> loose.isAlive() && !loose.getItem().isEmpty() && !outOfReach.contains(loose))
                     .stream().min(Comparator.comparingDouble(Bailiff.this::distanceToSqr)).orElse(null);
             return item != null;

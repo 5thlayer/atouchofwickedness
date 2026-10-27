@@ -26,6 +26,7 @@ import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import org.jspecify.annotations.Nullable;
@@ -52,6 +53,15 @@ final class Players {
         /** @return the sounds the player has been sent, in order */
         List<Holder<SoundEvent>> sounds() {
             return heard.stream().map(ClientboundSoundPacket::getSound).toList();
+        }
+
+        /**
+         * Raises what the player holds in {@code hand}, such as a shield, as long as it takes to
+         * block: a test's player isn't ticked as a client's is, so its use never runs on its own.
+         */
+        void raise(InteractionHand hand) {
+            startUsingItem(hand);
+            useItemRemaining -= 20;
         }
 
         @Override
