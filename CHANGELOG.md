@@ -4,6 +4,8 @@ Written for Consumers: what a mod building against A Touch of Wickedness can use
 
 ## Unreleased
 
+## 0.1.0
+
 - Killing a creature adds its weight to the killer's hidden Wickedness: 2 for livestock, 5 for wild animals, 15 for rare and companion creatures, 30 for a villager and 50 for a cat or ocelot. The weights are the data map `atouchofwickedness:wickedness_weight` on entity types, unlisted meaning 0, so a datapack can weigh any creature.
 - A kill is credited as vanilla credits its experience: to the player who last hurt the creature, by arrow, trident or a trap they knocked it into too, or to the owner of the tamed pet that killed it. A kill no player had a hand in counts for no one, and Creative and Spectator players gain nothing and are never visited.
 - Any tamed creature weighs 50 whoever owns it, a baby double, and a neutral mob that went for its killer before they struck it nothing (an iron golem always counts). Each damaging hit short of the killing blow on a creature weighing 30 or more adds 3. The tamed weight, the baby multiplier, the hit cost and the weight it starts from are in the common config.
