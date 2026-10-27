@@ -35,6 +35,7 @@ path = [
     "**/src/main/resources/**/*.png",
     "LICENSE",
     "NOTICE",
+    "publish/summary.txt",
 ]
 SPDX-FileCopyrightText = "2026 5thlayer"
 SPDX-License-Identifier = "CC-BY-4.0"
@@ -56,9 +57,12 @@ precedence = "override"
 SPDX-FileCopyrightText = "Malcolm Riley"
 SPDX-License-Identifier = "CC-BY-4.0"
 
-# The Strongbox's chest sheet, built from his tiny stone chest.
+# The Strongbox's chest sheet, built from his tiny stone chest, and the cover and icon that draw it.
 [[annotations]]
-path = ["src/main/resources/assets/atouchofwickedness/textures/entity/chest/strongbox.png"]
+path = [
+    "src/main/resources/assets/atouchofwickedness/textures/entity/chest/strongbox.png",
+    "publish/*.png",
+]
 precedence = "override"
 SPDX-FileCopyrightText = ["Malcolm Riley", "2026 5thlayer"]
 SPDX-License-Identifier = "CC-BY-4.0"
