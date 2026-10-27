@@ -8,24 +8,27 @@ import java.util.Set;
 
 import io.github._5thlayer.atouchofwickedness.bailiff.Bailiff;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
-import net.minecraft.core.BlockPos;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.TagValueOutput;
 
 /**
  * The Bailiff in a harder world: it picks up items lying near it, its dead player's drops included,
  * toward its haul, and never comes for a dead player; on Peaceful it deals no damage and still
- * steals, though not through a raised shield; each wicked player gets a Bailiff of their own, which anyone may kill; and it is gone once
- * its player logs out or changes dimension, leaving them owing, and is never saved, so none is left
- * after a restart.
+ * steals, though not through a raised shield; each wicked player gets a Bailiff of their own,
+ * which anyone may kill; and it is gone once its player logs out or changes dimension, respawning
+ * included, leaving them owing, and is never saved, so none is left after a restart.
  */
 final class HarderWorldTests {
 
@@ -49,6 +52,7 @@ final class HarderWorldTests {
         tests.test("harder_world_two_wicked_players_each_get_their_own_and_another_player_kills_one", 200, HarderWorldTests::twoPlayers);
         tests.test("harder_world_it_is_gone_once_its_player_logs_out", 20, HarderWorldTests::logsOut);
         tests.test("harder_world_it_is_gone_once_its_player_changes_dimension", 20, HarderWorldTests::changesDimension);
+        tests.test("harder_world_it_is_gone_once_its_player_respawns_in_another_dimension", 20, HarderWorldTests::respawnsElsewhere);
         tests.test("harder_world_it_is_never_saved_so_none_is_left_after_a_restart", 1, HarderWorldTests::restart);
     }
 
@@ -162,6 +166,32 @@ final class HarderWorldTests {
         var nether = helper.getLevel().getServer().getLevel(Level.NETHER);
         player.teleportTo(nether, 0.5, 64, 0.5, Set.of(), 0, 0, true);
         assertEndedOwing(helper, bailiff, player, "changed dimension");
+    }
+
+    private static void respawnsElsewhere(GameTestHelper helper) {
+        var player = Players.join(helper, PLAYER);
+        var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
+        // Above the Nether's roof, where the air is free to respawn in; a respawn changes dimension
+        // without the event a teleport posts, so the Bailiff finds its player gone as it ticks.
+        var roof = new BlockPos(0, 130, 0);
+        player.setRespawnPosition(new ServerPlayer.RespawnConfig(
+                new LevelData.RespawnData(GlobalPos.of(Level.NETHER, roof), 0, 0), true), false);
+        player.kill(helper.getLevel());
+        var server = helper.getLevel().getServer();
+        var respawned = server.getPlayerList().respawn(player, false, Entity.RemovalReason.KILLED);
+        if (respawned.level().dimension() != Level.NETHER) {
+            helper.fail("the player respawned in " + respawned.level().dimension().identifier() + ", not the Nether");
+            return;
+        }
+        helper.succeedWhen(() -> {
+            if (!bailiff.isRemoved()) {
+                throw helper.assertionException("the Bailiff stayed after its player respawned in another dimension");
+            }
+            if (Wickedness.of(respawned) < Wickedness.threshold(respawned)) {
+                throw helper.assertionException("the Bailiff whose player respawned elsewhere left them at "
+                        + Wickedness.of(respawned) + " Wickedness, under their Threshold of " + Wickedness.threshold(respawned));
+            }
+        });
     }
 
     /**

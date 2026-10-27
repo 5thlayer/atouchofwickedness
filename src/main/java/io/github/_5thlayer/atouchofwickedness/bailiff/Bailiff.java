@@ -71,9 +71,9 @@ import org.jspecify.annotations.Nullable;
  * them, or after a while however far it got, it stands still charging a teleport, when its player
  * can still kill it from afar, then vanishes with what it carries; one that vanishes with nothing
  * leaves its player owing ({@link Wickedness#owe}). Killed, it drops everything it stole and a few
- * Seals. Its player dying doesn't end the visit, but their logging out, the server stopping included,
- * or changing dimension does: it is gone, never saved, and leaves them owing as one that vanishes
- * with nothing does.
+ * Seals. Its player dying doesn't end the visit, but their logging out, the server stopping
+ * included, or changing dimension, respawning included, does: it is gone, never saved, and leaves
+ * them owing as one that vanishes with nothing does.
  */
 public final class Bailiff extends PathfinderMob implements ContainerUser {
 

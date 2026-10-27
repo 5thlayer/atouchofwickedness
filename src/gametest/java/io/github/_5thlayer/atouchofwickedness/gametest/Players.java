@@ -61,6 +61,7 @@ final class Players {
          */
         void raise(InteractionHand hand) {
             startUsingItem(hand);
+            // A second, past any shield's delay before it blocks, a quarter of one in vanilla.
             useItemRemaining -= 20;
         }
 

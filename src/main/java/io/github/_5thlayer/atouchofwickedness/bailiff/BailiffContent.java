@@ -14,12 +14,15 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** The Bailiff, as a creature, its sounds, its arrival, its taunt and its teleport away, and the Zs it sleeps under. */
+/**
+ * The Bailiff, as a creature, its sounds, its arrival, its taunt and its teleport away, and the Zs it
+ * sleeps under, and the end of its visit as its player logs out or changes dimension.
+ */
 public final class BailiffContent {
 
     private static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(ATouchOfWickedness.MOD_ID);
