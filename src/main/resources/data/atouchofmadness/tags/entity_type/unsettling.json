@@ -1,0 +1,6 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "atouchofwickedness:bailiff", "required": false }
+  ]
+}
