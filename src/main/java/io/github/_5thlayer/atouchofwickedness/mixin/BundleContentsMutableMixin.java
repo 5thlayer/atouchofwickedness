@@ -76,8 +76,8 @@ public abstract class BundleContentsMutableMixin implements BailiffsBag.Capacity
         }
         var topUp = added.split(room);
         int inserted = original.call(topUp);
-        boolean full = !topUp.isEmpty();
+        boolean bagFull = !topUp.isEmpty();
         added.grow(topUp.getCount());
-        return full ? inserted : inserted + original.call(added);
+        return bagFull ? inserted : inserted + original.call(added);
     }
 }
