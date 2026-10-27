@@ -74,7 +74,7 @@ final class DropTests {
         helper.succeed();
     }
 
-    private static int count(GameTestHelper helper, AABB around, Item item) {
+    static int count(GameTestHelper helper, AABB around, Item item) {
         return helper.getLevel().getEntitiesOfClass(ItemEntity.class, around, entity -> entity.getItem().is(item)).stream()
                 .mapToInt(entity -> entity.getItem().getCount())
                 .sum();

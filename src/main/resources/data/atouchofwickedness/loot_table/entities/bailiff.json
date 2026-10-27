@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "atouchofwickedness:bag_chance"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "atouchofwickedness:bailiffs_bag"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "atouchofwickedness:entities/bailiff"
+}

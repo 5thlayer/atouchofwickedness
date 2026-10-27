@@ -3,6 +3,7 @@
 
 package io.github._5thlayer.atouchofwickedness;
 
+import io.github._5thlayer.atouchofwickedness.bag.BagChance;
 import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
 import io.github._5thlayer.atouchofwickedness.bailiff.ItemValues;
 import io.github._5thlayer.atouchofwickedness.bailiff.Seizable;
@@ -22,7 +23,7 @@ import net.neoforged.fml.config.ModConfig;
  * The Pillar's entry point. It registers Wickedness, its Warnings and the animals fleeing a Forfeit
  * player, the Wicked kills that raise it and the kind acts that atone for it, the Bailiff that comes
  * when it reaches the Threshold and the Seizable containers it robs, the Strongbox it never robs, the
- * Seal and the Tally Stick, the {@code /wickedness} command, the common config and the Pillar's own
+ * Seal, the Tally Stick and the Bailiff's Bag, the {@code /wickedness} command, the common config and the Pillar's own
  * creative tab. The game tests hook themselves in from the {@code gametest} source set, which never
  * ships (libworks ADR 0011).
  */
@@ -44,6 +45,7 @@ public final class ATouchOfWickedness {
         ItemValues.register(modBus);
         Strongbox.register(modBus);
         WickednessItems.register(modBus);
+        BagChance.register(modBus);
         WickednessCommand.register();
         WickednessTab.register(modBus);
     }

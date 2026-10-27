@@ -4,9 +4,15 @@
   "compatibilityLevel": "JAVA_25",
   "minVersion": "0.8",
   "mixins": [
+    "BundleContentsMutableMixin",
+    "BundleItemMixin",
     "CompoundContainerAccessor",
     "LivingEntityPickupMixin",
     "ZombieVillagerAccessor"
+  ],
+  "client": [
+    "BundleMouseActionsMixin",
+    "ClientBundleTooltipMixin"
   ],
   "injectors": {
     "defaultRequire": 1

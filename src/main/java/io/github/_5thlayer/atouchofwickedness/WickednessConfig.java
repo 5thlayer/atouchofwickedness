@@ -65,6 +65,8 @@ public final class WickednessConfig {
     private static final ModConfigSpec.IntValue SECONDS_TO_TELEPORT;
     private static final ModConfigSpec.IntValue SEALS_MIN;
     private static final ModConfigSpec.IntValue SEALS_MAX;
+    private static final ModConfigSpec.DoubleValue BAG_CHANCE;
+    private static final ModConfigSpec.DoubleValue BAG_CHANCE_PER_LOOTING_LEVEL;
     private static final ModConfigSpec.IntValue TALLY_STICK_USES;
 
     static {
@@ -240,6 +242,12 @@ public final class WickednessConfig {
         SEALS_MAX = builder
                 .comment("The most Seals a killed Bailiff drops. Below the fewest, the fewest drop every time.")
                 .defineInRange("sealsMax", 3, 0, 64);
+        BAG_CHANCE = builder
+                .comment("The chance a killed Bailiff also drops a Bailiff's Bag, which holds four times what a bundle holds.")
+                .defineInRange("bagChance", 0.05, 0, 1);
+        BAG_CHANCE_PER_LOOTING_LEVEL = builder
+                .comment("What each level of Looting on its killer's weapon adds to the chance of a Bailiff's Bag.")
+                .defineInRange("bagChancePerLootingLevel", 0.01, 0, 1);
         builder.pop();
 
         builder.push("tallyStick");
@@ -367,6 +375,14 @@ public final class WickednessConfig {
 
     public static int sealsMax() {
         return Math.max(SEALS_MIN.getAsInt(), SEALS_MAX.getAsInt());
+    }
+
+    public static float bagChance() {
+        return (float) BAG_CHANCE.getAsDouble();
+    }
+
+    public static float bagChancePerLootingLevel() {
+        return (float) BAG_CHANCE_PER_LOOTING_LEVEL.getAsDouble();
     }
 
     /** The Tally Stick's uses, or the default before the config has loaded, as when items are first built. */

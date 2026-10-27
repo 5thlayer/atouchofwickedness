@@ -48,5 +48,6 @@ public final class WickednessTab {
         output.accept(WickednessItems.SEAL.get());
         output.accept(WickednessItems.TALLY_STICK.get());
         output.accept(WickednessItems.STRONGBOX.get());
+        output.accept(WickednessItems.BAILIFFS_BAG.get());
     }
 }

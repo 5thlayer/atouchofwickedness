@@ -5,7 +5,6 @@ package io.github._5thlayer.atouchofwickedness.gametest;
 
 import java.util.Set;
 
-import io.github._5thlayer.atouchofwickedness.ATouchOfWickedness;
 import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
@@ -16,8 +15,6 @@ import net.minecraft.gametest.framework.GameTestRunner;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.config.ModConfigs;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -91,9 +88,7 @@ final class ArrivalTests {
 
     /** Shortens the cooldown between visits to {@code seconds} until the test ends. */
     private static void forceCooldown(GameTestHelper helper, int seconds) {
-        var spec = (ModConfigSpec) ModConfigs.getModConfigs(ATouchOfWickedness.MOD_ID).stream()
-                .filter(config -> config.getType() == ModConfig.Type.COMMON).findFirst().orElseThrow().getSpec();
-        ModConfigSpec.IntValue value = spec.getValues().get("bailiff.secondsBetweenVisits");
+        ModConfigSpec.IntValue value = Configs.common("bailiff.secondsBetweenVisits");
         int before = value.getAsInt();
         value.set(seconds);
         helper.testInfo.addListener(new GameTestListener() {
