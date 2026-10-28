@@ -1,11 +1,12 @@
 # SPDX-FileCopyrightText: 2026 5thlayer
 # SPDX-License-Identifier: MIT
 
-# Temporary cover and icon, a great Seal stamped on the title's ribbon among the Bailiff's spoils, in the -works
-# suite's style (A Touch of Darkness's make-cover.py), until an in-game screenshot or an artist's art
-# replaces them. The Bailiff is vanilla's wandering trader retinted, so the cover holds only his
-# shadow, drawn from the villager model's boxes rather than from Mojang's texture (libworks ADR 0012). They carry Malcolm Riley's art through the Strongbox (NOTICE). Run
-# from the repo root with Pillow installed.
+# Temporary cover and icon, the Bailiff's shadow behind the title's ribbon among his spoils, with a
+# great Seal stamped over it on the icon, in the -works suite's style (A Touch of Darkness's
+# make-cover.py), until an in-game screenshot or an artist's art replaces them. The Bailiff is
+# vanilla's wandering trader retinted, so they hold only his shadow, drawn from the villager model's
+# boxes rather than from Mojang's texture (libworks ADR 0012). They carry Malcolm Riley's art through
+# the Strongbox (NOTICE). Run from the repo root with Pillow installed.
 import math
 import os
 import random
@@ -118,13 +119,14 @@ def font(names, size):
 
 def make(W, H, out, title_size, px, seal, stacked=False):
     # stacked puts "A touch of" above the word, for the square icon, with the great Seal above the band
-    # and the two together centred in the height; otherwise the Seal sits on the band's right, centred
-    # on it, and the title is centred in the room it leaves. seal is the Seal's size, as a fraction of
-    # the height
+    # and the two together centred in the height, and the Bailiff behind them a third of the way
+    # across. Otherwise the title spans the width as the suite's other covers' do, set in a condensed
+    # face so the longer word fits at their size, and the Bailiff stands behind the band on the right,
+    # peering over it, with the spoils to his left. seal is the great Seal's size, as a fraction of the
+    # height, and the cover has none
     ss = int(seal * H)
-    f1 = font(['/System/Library/Fonts/Supplemental/Impact.ttf', '/usr/share/fonts/TTF/impact.ttf',
-               os.path.expanduser('~/.local/share/fonts/msfonts/impact.ttf'),
-               '/usr/share/fonts/noto/NotoSans-Black.ttf'], title_size)
+    f1 = font(['/usr/share/fonts/noto/NotoSans-Black.ttf'] if stacked else
+              ['/usr/share/fonts/noto/NotoSansSinhala-BlackCondensed.ttf'], title_size)
     f2 = font(['/System/Library/Fonts/Supplemental/Apple Chancery.ttf', '/usr/share/fonts/gsfonts/Z003-MediumItalic.otf',
                '/usr/share/fonts/urw-base35/Z003-MediumItalic.otf'], int(title_size * (0.62 if stacked else 0.55)))
     # the -works title turned around: the suite's "A touch of" in a script, then the Pillar's word
@@ -142,27 +144,13 @@ def make(W, H, out, title_size, px, seal, stacked=False):
         sh_ = ss * 14 // 16
         m = (H - sh_ - bh) // 3
         sy, cy, sx = m + sh_ // 2, 2 * m + sh_ + bh // 2, W // 2
-        room = W
+        bx, b = W // 3, bailiff(int(H * 0.94))
     else:
-        cy = sy = H // 2
-        sx = W - int(H * 0.32)
-        room = sx - ss // 2
+        cy = H // 2
+        bx, b = int(W * 0.86), bailiff(int(H * 0.9))
     top, bot = cy - bh // 2, cy + bh // 2
     rows = [] if stacked else [top // 2, (bot + H) // 2]
-    left = 0
-    if not stacked:
-        left = int(H * 0.4)
-        room -= left
-    img = field(W, H, px, 11, rows, room)
-    if left:
-        # room at the left for the Bailiff, who stands behind the ribbon
-        shift = Image.new('RGBA', (W, H), BG + (255,))
-        shift.alpha_composite(img.crop((0, 0, W - left, H)), (left, 0))
-        img = shift
-    # the Bailiff stands behind the ribbon and the Seal: at the cover's left, and a third of the way
-    # across the icon
-    b = bailiff(int(H * (0.62 if left else 0.94)))
-    bx = left // 2 if left else W // 3
+    img = field(W, H, px, 11, rows, bx - b.width // 2)
     img.alpha_composite(b, (bx - b.width // 2, H // 2 - b.height // 2))
     band = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     ImageDraw.Draw(band).rectangle([0, top, W, bot], fill=(6, 3, 4, 240))
@@ -171,13 +159,14 @@ def make(W, H, out, title_size, px, seal, stacked=False):
     lt = max(3, title_size // 25)
     d.rectangle([0, top, W, top + lt], fill=ACCENT)
     d.rectangle([0, bot - lt, W, bot], fill=ACCENT)
-    stamp(img, sx, sy, ss)
+    if stacked:
+        stamp(img, sx, sy, ss)
     d = ImageDraw.Draw(img)
     if stacked:
         x, bt = (W - bw) // 2, cy - th // 2
         tx, tt = (W - w1) // 2, bt + ph + gap
     else:
-        x, bt = left + (room - (bw + gap + w1)) // 2, cy - h1 // 2
+        x, bt = (W - (bw + gap + w1)) // 2, cy - h1 // 2
         tx, tt = x + bw + gap, bt
     qx, qy = x + gap - b2[0], bt + (ph - h2) // 2 - b2[1]
     d.text((qx + sh, qy + sh), w, font=f2, fill=(0, 0, 0))
@@ -188,5 +177,5 @@ def make(W, H, out, title_size, px, seal, stacked=False):
     img.convert('RGB').save(out)
 
 
-make(1280, 640, 'publish/atouchofwickedness-cover.png', 72, 64, 0.46)
+make(1280, 640, 'publish/atouchofwickedness-cover.png', 150, 80, 0)
 make(512, 512, 'publish/atouchofwickedness-icon.png', 74, 48, 0.42, stacked=True)
