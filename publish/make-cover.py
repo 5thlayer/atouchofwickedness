@@ -61,7 +61,7 @@ def bailiff(h):
     # 16ths of a block: the hooded head and its long nose, the arms crossed before him, the robe and
     # the legs under it, in a soft light grey glow so he stands out of the dark
     u = h / 35
-    k = int(u * 4)
+    k = int(u * 8)
     im = Image.new('RGBA', (int(12 * u) + 2 * k, h + 2 * k))
     d = ImageDraw.Draw(im)
     for x0, y0, x1, y1 in [(0.5, 0, 9.5, 11), (9, 9.5, 11, 14), (2, 10.5, 8.5, 29), (3, 26, 7.5, 35)]:
@@ -70,7 +70,7 @@ def bailiff(h):
               fill=(0, 0, 0, 255))
     a = im.getchannel('A')
     halo = Image.new('RGBA', im.size, (190, 190, 196, 0))
-    halo.putalpha(a.filter(ImageFilter.GaussianBlur(u * 1.6)).point(lambda v: v * 7 // 10))
+    halo.putalpha(a.filter(ImageFilter.GaussianBlur(u * 3.5)).point(lambda v: min(255, v * 9 // 10)))
     halo.alpha_composite(im)
     return halo
 
