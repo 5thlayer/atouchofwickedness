@@ -1,0 +1,30 @@
+{
+  "parent": "atouchofwickedness:discovery/marked",
+  "criteria": {
+    "overdue": {
+      "trigger": "atouchofwickedness:standing",
+      "conditions": {
+        "standing": "overdue"
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.overdue.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:iron_chain"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.overdue.title"
+    }
+  },
+  "requirements": [
+    [
+      "overdue"
+    ]
+  ]
+}

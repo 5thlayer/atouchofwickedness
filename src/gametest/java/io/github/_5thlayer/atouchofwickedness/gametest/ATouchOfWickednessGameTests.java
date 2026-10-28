@@ -91,6 +91,7 @@ public final class ATouchOfWickednessGameTests {
         ValueTests.register(tests);
         GossipTests.register(tests);
         UnsettlingTests.register(tests);
+        DiscoveryTests.register(tests);
     }
 
     private static Identifier id(String path) {

@@ -1,0 +1,27 @@
+{
+  "parent": "atouchofwickedness:discovery/root",
+  "criteria": {
+    "wicked_kill": {
+      "trigger": "atouchofwickedness:wicked_kill"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.wicked_kill.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:bone"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.wicked_kill.title"
+    }
+  },
+  "requirements": [
+    [
+      "wicked_kill"
+    ]
+  ]
+}

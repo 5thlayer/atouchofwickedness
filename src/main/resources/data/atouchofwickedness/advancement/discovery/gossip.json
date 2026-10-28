@@ -1,0 +1,27 @@
+{
+  "parent": "atouchofwickedness:discovery/wicked_kill",
+  "criteria": {
+    "gossiped": {
+      "trigger": "atouchofwickedness:gossiped"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.gossip.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:writable_book"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.gossip.title"
+    }
+  },
+  "requirements": [
+    [
+      "gossiped"
+    ]
+  ]
+}

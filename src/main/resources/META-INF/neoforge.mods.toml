@@ -28,6 +28,14 @@ versionRange = "[${minecraft_version}]"
 ordering = "NONE"
 side = "BOTH"
 
+# A Touch Of's Runtime, nested in the jar, which keeps the Pillar's Discovery record (#19).
+[[dependencies.${mod_id}]]
+modId = "atouchof"
+type = "required"
+versionRange = "${atouchof_range}"
+ordering = "AFTER"
+side = "BOTH"
+
 # Shows the player a Bailiff came for and what it carries in Jade's tooltip (#13). Not required: its
 # plugin is only loaded by Jade. The range is the Jade the plugin is compiled against.
 [[dependencies.${mod_id}]]
@@ -37,12 +45,12 @@ versionRange = "[26.1.11,)"
 ordering = "NONE"
 side = "BOTH"
 
-# Loaded in the dev client to look up the Pillar's recipes, which it shows unaided (#13). Not
-# required, and the Pillar has no EMI plugin.
+# Shows information pages on the Pillar's things in EMI, each until its Discovery (#19). Not required:
+# its plugin is only loaded by EMI. The range is the EMI port the plugin is compiled against.
 [[dependencies.${mod_id}]]
 modId = "emi"
 type = "optional"
-versionRange = "[0,)"
+versionRange = "[1.1.24,)"
 ordering = "NONE"
 side = "CLIENT"
 

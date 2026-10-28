@@ -1,0 +1,27 @@
+{
+  "parent": "atouchofwickedness:discovery/forfeit",
+  "criteria": {
+    "came": {
+      "trigger": "atouchofwickedness:bailiff_came"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.bailiff.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:ender_pearl"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.bailiff.title"
+    }
+  },
+  "requirements": [
+    [
+      "came"
+    ]
+  ]
+}

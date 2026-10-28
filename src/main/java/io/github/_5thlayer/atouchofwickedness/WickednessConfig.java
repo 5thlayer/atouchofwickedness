@@ -12,14 +12,16 @@ import io.github._5thlayer.atouchofwickedness.wickedness.WickednessWeight;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * The Pillar's common config, {@code atouchofwickedness-common.toml}: every number of the loop, each a
- * starting value to tune in play (suite ADR-0001). The creatures' weights are not here: they are the
- * {@code atouchofwickedness:wickedness_weight} data map, so a pack weighs modded creatures too, and the
- * items' Values the {@code atouchofwickedness:bailiff_value} one.
+ * The Pillar's common config, {@code atouchofwickedness-common.toml}: whether Discovery is on, and
+ * every number of the loop, each a starting value to tune in play (suite ADR-0001). The creatures'
+ * weights are not here: they are the {@code atouchofwickedness:wickedness_weight} data map, so a pack
+ * weighs modded creatures too, and the items' Values the {@code atouchofwickedness:bailiff_value} one.
  */
 public final class WickednessConfig {
 
     static final ModConfigSpec SPEC;
+
+    private static final ModConfigSpec.BooleanValue DISCOVERY;
 
     private static final ModConfigSpec.IntValue TAMED_WEIGHT;
     private static final ModConfigSpec.DoubleValue BABY_MULTIPLIER;
@@ -74,6 +76,9 @@ public final class WickednessConfig {
 
     static {
         var builder = new ModConfigSpec.Builder();
+        DISCOVERY = builder
+                .comment("Whether the advancements and recipe viewers' information pages say nothing of a thing until the player has discovered it. Off, every thing is known.")
+                .define("discovery", true);
         builder.push("weights");
         TAMED_WEIGHT = builder
                 .comment("What killing any tamed creature adds, whoever owns it and whatever its own weight.")
@@ -401,6 +406,11 @@ public final class WickednessConfig {
 
     public static float bagChancePerLootingLevel() {
         return (float) BAG_CHANCE_PER_LOOTING_LEVEL.getAsDouble();
+    }
+
+    /** Whether Discovery is on, asked by the Runtime on the server thread. */
+    public static boolean discovery() {
+        return DISCOVERY.getAsBoolean();
     }
 
     /** The Tally Stick's uses, or the default before the config has loaded, as when items are first built. */

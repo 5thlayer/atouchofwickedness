@@ -1,0 +1,30 @@
+{
+  "parent": "atouchofwickedness:discovery/overdue",
+  "criteria": {
+    "forfeit": {
+      "trigger": "atouchofwickedness:standing",
+      "conditions": {
+        "standing": "forfeit"
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.forfeit.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:leather_boots"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.forfeit.title"
+    }
+  },
+  "requirements": [
+    [
+      "forfeit"
+    ]
+  ]
+}

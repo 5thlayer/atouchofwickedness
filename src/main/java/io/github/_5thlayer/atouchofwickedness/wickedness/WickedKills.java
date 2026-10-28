@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 
 import io.github._5thlayer.atouchofwickedness.ATouchOfWickedness;
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
+import io.github._5thlayer.atouchofwickedness.discovery.Discoveries;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -96,6 +97,7 @@ public final class WickedKills {
         int weight = effectiveWeightOf(creature, player);
         if (weight > 0) {
             Wickedness.add(player, weight);
+            Discoveries.wickedKill(player);
             tellWitnesses(creature, player, weight);
         }
     }
@@ -109,9 +111,13 @@ public final class WickedKills {
         }
         int radius = rules.radius();
         // A killed villager is no witness to its own death.
-        for (var villager : creature.level().getEntitiesOfClass(Villager.class, creature.getBoundingBox().inflate(radius),
-                villager -> villager != creature && villager.distanceTo(creature) <= radius && villager.hasLineOfSight(creature))) {
+        var witnesses = creature.level().getEntitiesOfClass(Villager.class, creature.getBoundingBox().inflate(radius),
+                villager -> villager != creature && villager.distanceTo(creature) <= radius && villager.hasLineOfSight(creature));
+        for (var villager : witnesses) {
             villager.getGossips().add(player.getUUID(), GossipType.MINOR_NEGATIVE, gossip);
+        }
+        if (!witnesses.isEmpty()) {
+            Discoveries.gossiped(player);
         }
     }
 

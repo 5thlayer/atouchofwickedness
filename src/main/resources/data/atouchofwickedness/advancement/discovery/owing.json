@@ -1,0 +1,27 @@
+{
+  "parent": "atouchofwickedness:discovery/bailiff",
+  "criteria": {
+    "owing": {
+      "trigger": "atouchofwickedness:owing"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.owing.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:paper"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.owing.title"
+    }
+  },
+  "requirements": [
+    [
+      "owing"
+    ]
+  ]
+}

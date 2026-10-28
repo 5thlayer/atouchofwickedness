@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import io.github._5thlayer.atouchofwickedness.ATouchOfWickedness;
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.bailiff.Arrival;
+import io.github._5thlayer.atouchofwickedness.discovery.Discoveries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -118,12 +119,17 @@ public final class Wickedness {
         var tally = player.getData(TALLY);
         tally.wickedness = Math.max(tally.wickedness, tally.threshold);
         player.setData(TALLY, tally);
+        Discoveries.owing(player);
     }
 
     /** Lowers the player's Wickedness by an Atonement of {@code amount}, unless the player is in Creative or Spectator. */
     public static void atone(ServerPlayer player, int amount) {
         if (counts(player) && amount > 0) {
-            set(player, Atonement.lowered(of(player), amount));
+            int before = of(player);
+            set(player, Atonement.lowered(before, amount));
+            if (of(player) < before) {
+                Discoveries.atoned(player);
+            }
         }
     }
 
@@ -150,7 +156,10 @@ public final class Wickedness {
         warn(player);
     }
 
-    /** Sounds the player's Warning if one is due, unless the player is in Creative or Spectator. */
+    /**
+     * Sounds the player's Warning if one is due, and tells Discovery of each new Standing, the one a
+     * player joins with included, unless the player is in Creative or Spectator.
+     */
     private static void warn(ServerPlayer player) {
         var tally = player.getData(TALLY);
         var standing = standing(player);
@@ -159,6 +168,9 @@ public final class Wickedness {
         if (counts(player) && Warning.due(tally.seen, standing, tally.warnedAt, now, rules)) {
             WarningSounds.play(player, standing, rules.of(standing).distance());
             tally.warnedAt = now;
+        }
+        if (standing != tally.seen && counts(player)) {
+            Discoveries.standing(player, standing);
         }
         tally.seen = standing;
     }

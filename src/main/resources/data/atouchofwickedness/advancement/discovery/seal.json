@@ -1,0 +1,34 @@
+{
+  "parent": "atouchofwickedness:discovery/root",
+  "criteria": {
+    "seal": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "atouchofwickedness:seal"
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.seal.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "atouchofwickedness:seal"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.seal.title"
+    }
+  },
+  "requirements": [
+    [
+      "seal"
+    ]
+  ]
+}

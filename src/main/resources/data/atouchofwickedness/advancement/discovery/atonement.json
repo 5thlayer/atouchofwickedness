@@ -1,0 +1,27 @@
+{
+  "parent": "atouchofwickedness:discovery/root",
+  "criteria": {
+    "atoned": {
+      "trigger": "atouchofwickedness:atoned"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.atonement.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:wheat"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.atonement.title"
+    }
+  },
+  "requirements": [
+    [
+      "atoned"
+    ]
+  ]
+}

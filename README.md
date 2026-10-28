@@ -37,6 +37,7 @@ All at permission level 2:
 
 Everything is in one common config, `config/atouchofwickedness-common.toml`. Times are in seconds.
 
+- **`discovery`** (true): the advancements and EMI's pages say nothing of a thing until the player has met it. Off, every thing is known.
 - **`weights`**: `tamed` (50), `babyMultiplier` (2), and `hitCost` (3), what each damaging hit short of the killing blow adds on a creature weighing `tormentWeight` (30) or more.
 - **`gossip`**: villagers within `radius` (16) who see a Wicked kill gain `scale` (5) times its weight in vanilla's minor negative gossip about the killer. 0 turns it off.
 - **`decay`**: `perDay` (10), the Wickedness that falls each in-game day while the player is online.
@@ -58,11 +59,12 @@ The numbers are provisional while A Touch of Wickedness is below 1.0.
 
 All optional, and none nested in the jar:
 
+- **[EMI](https://www.curseforge.com/minecraft/mc-mods/emi)** shows a page on each of the Pillar's things, each saying nothing until you have met it.
 - **[Jade](https://www.curseforge.com/minecraft/mc-mods/jade)** shows, when you look at a Bailiff, the player it came for and the stacks it has taken, and never anyone's Wickedness.
 - **[A Touch of Madness](https://github.com/5thlayer/atouchofmadness)**: a Bailiff nearby drains Sanity like any hostile mob, through an optional entry in `#atouchofmadness:unsettling`.
 
 ## Dependencies
 
-None beyond NeoForge, on Minecraft 26.1.2.
+None beyond NeoForge, on Minecraft 26.1.2. A Touch Of's Runtime, which keeps what each player has discovered, is nested in the jar.
 
 This is a hobby project: I’m not monetizing any part of A touch of mods suite. I’m building it for fun, to see how far I can take it.

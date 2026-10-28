@@ -13,6 +13,8 @@ import java.util.function.Predicate;
 
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.WickednessItems;
+import io.github._5thlayer.atouchofwickedness.discovery.Discoveries;
+import io.github._5thlayer.atouchofwickedness.wickedness.Standing;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -182,6 +184,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         }
         // Its work waits for the morning.
         entityData.set(DATA_ASLEEP, isNight());
+        // Its player was at their Threshold to bring it, so past Forfeit too.
+        Discoveries.standing(target, Standing.FORFEIT);
+        Discoveries.bailiffCame(target);
     }
 
     private void takeStats() {
@@ -429,7 +434,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
     /**
      * Takes one stack by Value from the first {@code slots} of {@code container}, but none that
-     * {@code kept} keeps.
+     * {@code kept} keeps, a seizure its player discovers while they are in its level.
      *
      * @return whether there was a stack worth taking
      */
@@ -440,6 +445,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         }
         stolen.add(container.removeItemNoUpdate(slot));
         container.setChanged();
+        if (level() instanceof ServerLevel level && target(level) instanceof ServerPlayer target) {
+            Discoveries.seized(target);
+        }
         return true;
     }
 

@@ -1,0 +1,34 @@
+{
+  "parent": "atouchofwickedness:discovery/root",
+  "criteria": {
+    "strongbox": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "atouchofwickedness:strongbox"
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.strongbox.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "atouchofwickedness:strongbox"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.strongbox.title"
+    }
+  },
+  "requirements": [
+    [
+      "strongbox"
+    ]
+  ]
+}

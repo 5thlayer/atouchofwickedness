@@ -1,0 +1,30 @@
+{
+  "parent": "atouchofwickedness:discovery/root",
+  "criteria": {
+    "marked": {
+      "trigger": "atouchofwickedness:standing",
+      "conditions": {
+        "standing": "marked"
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.marked.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:bell"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.marked.title"
+    }
+  },
+  "requirements": [
+    [
+      "marked"
+    ]
+  ]
+}

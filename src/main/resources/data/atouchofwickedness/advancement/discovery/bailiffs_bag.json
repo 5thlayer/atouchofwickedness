@@ -1,0 +1,34 @@
+{
+  "parent": "atouchofwickedness:discovery/root",
+  "criteria": {
+    "bailiffs_bag": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "atouchofwickedness:bailiffs_bag"
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.bailiffs_bag.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "atouchofwickedness:bailiffs_bag"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.bailiffs_bag.title"
+    }
+  },
+  "requirements": [
+    [
+      "bailiffs_bag"
+    ]
+  ]
+}

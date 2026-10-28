@@ -1,0 +1,27 @@
+{
+  "parent": "atouchofwickedness:discovery/bailiff",
+  "criteria": {
+    "seized": {
+      "trigger": "atouchofwickedness:seized"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "translate": "advancements.atouchofwickedness.discovery.seizure.description"
+    },
+    "hidden": true,
+    "icon": {
+      "id": "minecraft:chest"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.atouchofwickedness.discovery.seizure.title"
+    }
+  },
+  "requirements": [
+    [
+      "seized"
+    ]
+  ]
+}
