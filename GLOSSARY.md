@@ -84,6 +84,12 @@ _Avoid_: Decay (the fall of Wickedness), grace period
 The slow, steady fall of Wickedness over time, so a modest rate of killing, such as farming, never adds up.
 _Avoid_: forgiveness, cooldown
 
+### Discovery
+
+**Discovery**:
+The suite's **Discovery** (A Touch Of's glossary, suite ADR-0006), here of a player's first Wicked kill, each Standing past Clean the first time they reach it, the Bailiff's first visit, its first seizure, the first visit that leaves them owing, each of the Pillar's items the first time they hold it, their first Atonement, and the first gossip about one of their Wicked kills. It may name Wickedness and the Threshold and tell what they do, but never a number ADR 0002 hides. Decay is never discovered on its own: a Wicked kill tells it.
+_Avoid_: unlock, research, knowledge
+
 ### Dev runs
 
 **Game-test pack**:
