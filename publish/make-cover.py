@@ -3,14 +3,14 @@
 
 # Temporary cover and icon, a great Seal stamped on the title's ribbon among the Bailiff's spoils, in the -works
 # suite's style (A Touch of Darkness's make-cover.py), until an in-game screenshot or an artist's art
-# replaces them. The Bailiff isn't drawn: it is vanilla's wandering trader retinted, which the cover
-# can't hold (libworks ADR 0012). They carry Malcolm Riley's art through the Strongbox (NOTICE). Run
+# replaces them. The Bailiff is vanilla's wandering trader retinted, so the cover holds only his
+# shadow, drawn from the villager model's boxes rather than from Mojang's texture (libworks ADR 0012). They carry Malcolm Riley's art through the Strongbox (NOTICE). Run
 # from the repo root with Pillow installed.
 import math
 import os
 import random
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 T = 'src/main/resources/assets/atouchofwickedness/textures/'
 BG = (10, 6, 8)
@@ -49,9 +49,35 @@ def glow(rgb, r, strength=150):
     return im
 
 
-def field(W, H, px, seed, clear):
-    # the dark, with the spoils scattered through it, kept clear of the title band and of the great
-    # Seal between the fractions of the width in clear
+def put(img, s, cx, cy):
+    # a sprite pasted with its drawn pixels, not its canvas, centred on (cx, cy), so sprites that sit
+    # off-centre in their 16x16 still line up
+    l, t, r, b = s.getchannel('A').getbbox()
+    img.alpha_composite(s, (cx - (l + r) // 2, cy - (t + b) // 2))
+
+
+def bailiff(h):
+    # the Bailiff's black shadow in profile, facing the title, from the villager model's boxes in its
+    # 16ths of a block: the hooded head and its long nose, the arms crossed before him, the robe and
+    # the legs under it, in a soft light grey glow so he stands out of the dark and off the band
+    u = h / 35
+    k = int(u * 4)
+    im = Image.new('RGBA', (int(12 * u) + 2 * k, h + 2 * k))
+    d = ImageDraw.Draw(im)
+    for x0, y0, x1, y1 in [(0.5, 0, 9.5, 11), (9, 9.5, 11, 14), (2, 10.5, 8.5, 29), (3, 26, 7.5, 35)]:
+        d.rectangle([k + x0 * u, k + y0 * u, k + x1 * u, k + y1 * u], fill=(0, 0, 0, 255))
+    d.polygon([(k + x * u, k + y * u) for x, y in [(6, 13), (10.5, 15), (11.5, 19.5), (7, 21)]],
+              fill=(0, 0, 0, 255))
+    a = im.getchannel('A')
+    halo = Image.new('RGBA', im.size, (190, 190, 196, 0))
+    halo.putalpha(a.filter(ImageFilter.GaussianBlur(u * 1.6)).point(lambda v: v * 7 // 10))
+    halo.alpha_composite(im)
+    return halo
+
+
+def field(W, H, px, seed, rows, right):
+    # the dark, with the spoils set out once each, half above the band and half below it, in the same
+    # columns between the left edge and right
     rng = random.Random(seed)
     img = Image.new('RGBA', (W, H), BG + (255,))
     d = ImageDraw.Draw(img)
@@ -59,16 +85,15 @@ def field(W, H, px, seed, clear):
         v = rng.randrange(10, 22)
         x, y = rng.randrange(W), rng.randrange(H)
         d.point((x, y), fill=(v + 6, v - 4, v - 2))
-    slots = [(x, y) for y in (0.17, 0.83) for x in (0.12, 0.31, 0.5, 0.69, 0.88)
-             if not clear[0] <= x <= clear[1]]
-    rng.shuffle(slots)
-    for (fx, fy), draw in zip(slots, SPOILS * 3):
-        cx, cy = int(fx * W + rng.uniform(-0.04, 0.04) * W), int(fy * H)
-        if draw is SPOILS[0]:
-            g = glow(HAZE, int(px * 1.8), 110)
-            img.alpha_composite(g, (cx - g.width // 2, cy - g.height // 2))
-        s = draw(px)
-        img.alpha_composite(s, (cx - s.width // 2, cy - s.height // 2))
+    n = len(SPOILS) // max(1, len(rows))
+    for i, cy in enumerate(rows):
+        for j in range(n):
+            cx = int(right * (j + 0.5) / n)
+            draw = SPOILS[i * n + j]
+            if draw is SPOILS[0]:
+                g = glow(HAZE, int(px * 1.8), 110)
+                img.alpha_composite(g, (cx - g.width // 2, cy - g.height // 2))
+            put(img, draw(px), cx, cy)
     return img
 
 
@@ -80,8 +105,8 @@ def stamp(img, cx, cy, size):
     shadow = Image.new('RGBA', s.size, (0, 0, 0, 0))
     shadow.putalpha(s.getchannel('A').point(lambda a: a * 3 // 5))
     o = max(4, size // 24)
-    img.alpha_composite(shadow, (cx - size // 2 + o, cy - size // 2 + o))
-    img.alpha_composite(s, (cx - size // 2, cy - size // 2))
+    put(img, shadow, cx + o, cy + o)
+    put(img, s, cx, cy)
 
 
 def font(names, size):
@@ -92,11 +117,11 @@ def font(names, size):
 
 
 def make(W, H, out, title_size, px, seal, stacked=False):
-    # stacked puts "A touch of" above the word, for the square icon. seal is the great Seal's middle and
-    # size, as fractions of the height; the title is centred in the room the Seal leaves it, beside it
-    # on the cover and below it on the icon
-    sx, sy, ss = seal
-    img = field(W, H, px, 11, (sx * H / W - ss * H / W, sx * H / W + ss * H / W))
+    # stacked puts "A touch of" above the word, for the square icon, with the great Seal above the band
+    # and the two together centred in the height; otherwise the Seal sits on the band's right, centred
+    # on it, and the title is centred in the room it leaves. seal is the Seal's size, as a fraction of
+    # the height
+    ss = int(seal * H)
     f1 = font(['/System/Library/Fonts/Supplemental/Impact.ttf', '/usr/share/fonts/TTF/impact.ttf',
                os.path.expanduser('~/.local/share/fonts/msfonts/impact.ttf'),
                '/usr/share/fonts/noto/NotoSans-Black.ttf'], title_size)
@@ -104,29 +129,53 @@ def make(W, H, out, title_size, px, seal, stacked=False):
                '/usr/share/fonts/urw-base35/Z003-MediumItalic.otf'], int(title_size * (0.62 if stacked else 0.55)))
     # the -works title turned around: the suite's "A touch of" in a script, then the Pillar's word
     w, a = 'A touch of', 'WICKEDNESS'
-    d = ImageDraw.Draw(img)
+    d = ImageDraw.Draw(Image.new('RGBA', (1, 1)))
     b1, b2 = d.textbbox((0, 0), a, font=f1), d.textbbox((0, 0), w, font=f2)
     w1, w2, h1, h2 = b1[2] - b1[0], b2[2] - b2[0], b1[3] - b1[1], b2[3] - b2[1]
     pad, gap, sh = int(title_size * 0.16), int(title_size * 0.1), max(3, title_size // 20)
     bw, ph = w2 + 2 * gap, (h2 + 2 * pad if stacked else h1)
     th = ph + gap + h1 if stacked else h1
-    cy = int(H * (sy + ss * 0.62) + (th + title_size * 0.6) / 2) if stacked else H // 2
     bh = int(th + title_size * 0.6)
+    if stacked:
+        # the Seal's drawn height is 14/16 of its size; the gap between it and the band matches the
+        # margins above and below
+        sh_ = ss * 14 // 16
+        m = (H - sh_ - bh) // 3
+        sy, cy, sx = m + sh_ // 2, 2 * m + sh_ + bh // 2, W // 2
+        room = W
+    else:
+        cy = sy = H // 2
+        sx = W - int(H * 0.32)
+        room = sx - ss // 2
+    top, bot = cy - bh // 2, cy + bh // 2
+    rows = [] if stacked else [top // 2, (bot + H) // 2]
+    left = 0
+    if not stacked:
+        left = int(H * 0.4)
+        room -= left
+    img = field(W, H, px, 11, rows, room)
+    if left:
+        # room at the left for the Bailiff, who stands in front of the ribbon
+        shift = Image.new('RGBA', (W, H), BG + (255,))
+        shift.alpha_composite(img.crop((0, 0, W - left, H)), (left, 0))
+        img = shift
     band = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(band).rectangle([0, cy - bh // 2, W, cy + bh // 2], fill=(6, 3, 4, 240))
+    ImageDraw.Draw(band).rectangle([0, top, W, bot], fill=(6, 3, 4, 240))
     img = Image.alpha_composite(img, band)
     d = ImageDraw.Draw(img)
     lt = max(3, title_size // 25)
-    d.rectangle([0, cy - bh // 2, W, cy - bh // 2 + lt], fill=ACCENT)
-    d.rectangle([0, cy + bh // 2 - lt, W, cy + bh // 2], fill=ACCENT)
-    stamp(img, int(sx * H), int(sy * H), int(ss * H))
+    d.rectangle([0, top, W, top + lt], fill=ACCENT)
+    d.rectangle([0, bot - lt, W, bot], fill=ACCENT)
+    if left:
+        b = bailiff(int(H * 0.62))
+        img.alpha_composite(b, (left // 2 - b.width // 2, H // 2 - b.height // 2))
+    stamp(img, sx, sy, ss)
     d = ImageDraw.Draw(img)
     if stacked:
         x, bt = (W - bw) // 2, cy - th // 2
         tx, tt = (W - w1) // 2, bt + ph + gap
     else:
-        room = int((sx - ss * 0.5) * H)
-        x, bt = (room - (bw + gap + w1)) // 2, cy - h1 // 2
+        x, bt = left + (room - (bw + gap + w1)) // 2, cy - h1 // 2
         tx, tt = x + bw + gap, bt
     qx, qy = x + gap - b2[0], bt + (ph - h2) // 2 - b2[1]
     d.text((qx + sh, qy + sh), w, font=f2, fill=(0, 0, 0))
@@ -137,5 +186,5 @@ def make(W, H, out, title_size, px, seal, stacked=False):
     img.convert('RGB').save(out)
 
 
-make(1280, 640, 'publish/atouchofwickedness-cover.png', 92, 64, (1.68, 0.56, 0.46))
-make(512, 512, 'publish/atouchofwickedness-icon.png', 74, 48, (0.5, 0.3, 0.42), stacked=True)
+make(1280, 640, 'publish/atouchofwickedness-cover.png', 72, 64, 0.46)
+make(512, 512, 'publish/atouchofwickedness-icon.png', 74, 48, 0.42, stacked=True)
