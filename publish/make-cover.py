@@ -59,7 +59,7 @@ def put(img, s, cx, cy):
 def bailiff(h):
     # the Bailiff's black shadow in profile, facing the title, from the villager model's boxes in its
     # 16ths of a block: the hooded head and its long nose, the arms crossed before him, the robe and
-    # the legs under it, in a soft light grey glow so he stands out of the dark and off the band
+    # the legs under it, in a soft light grey glow so he stands out of the dark
     u = h / 35
     k = int(u * 4)
     im = Image.new('RGBA', (int(12 * u) + 2 * k, h + 2 * k))
@@ -155,10 +155,12 @@ def make(W, H, out, title_size, px, seal, stacked=False):
         room -= left
     img = field(W, H, px, 11, rows, room)
     if left:
-        # room at the left for the Bailiff, who stands in front of the ribbon
+        # room at the left for the Bailiff, who stands behind the ribbon
         shift = Image.new('RGBA', (W, H), BG + (255,))
         shift.alpha_composite(img.crop((0, 0, W - left, H)), (left, 0))
         img = shift
+        b = bailiff(int(H * 0.62))
+        img.alpha_composite(b, (left // 2 - b.width // 2, H // 2 - b.height // 2))
     band = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     ImageDraw.Draw(band).rectangle([0, top, W, bot], fill=(6, 3, 4, 240))
     img = Image.alpha_composite(img, band)
@@ -166,9 +168,6 @@ def make(W, H, out, title_size, px, seal, stacked=False):
     lt = max(3, title_size // 25)
     d.rectangle([0, top, W, top + lt], fill=ACCENT)
     d.rectangle([0, bot - lt, W, bot], fill=ACCENT)
-    if left:
-        b = bailiff(int(H * 0.62))
-        img.alpha_composite(b, (left // 2 - b.width // 2, H // 2 - b.height // 2))
     stamp(img, sx, sy, ss)
     d = ImageDraw.Draw(img)
     if stacked:
