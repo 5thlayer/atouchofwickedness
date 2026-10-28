@@ -159,9 +159,10 @@ def make(W, H, out, title_size, px, seal, stacked=False):
         shift = Image.new('RGBA', (W, H), BG + (255,))
         shift.alpha_composite(img.crop((0, 0, W - left, H)), (left, 0))
         img = shift
-    # the Bailiff stands behind the ribbon and the Seal: at the cover's left, in the icon's middle
+    # the Bailiff stands behind the ribbon and the Seal: at the cover's left, and a third of the way
+    # across the icon
     b = bailiff(int(H * (0.62 if left else 0.94)))
-    bx = left // 2 if left else W // 2
+    bx = left // 2 if left else W // 3
     img.alpha_composite(b, (bx - b.width // 2, H // 2 - b.height // 2))
     band = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     ImageDraw.Draw(band).rectangle([0, top, W, bot], fill=(6, 3, 4, 240))
