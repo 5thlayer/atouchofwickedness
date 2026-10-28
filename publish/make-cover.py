@@ -118,15 +118,14 @@ def font(names, size):
 
 
 def make(W, H, out, title_size, px, seal, stacked=False):
-    # stacked puts "A touch of" above the word, for the square icon, with the great Seal above the band
-    # and the two together centred in the height, and the Bailiff behind them a third of the way
-    # across. Otherwise the title spans the width as the suite's other covers' do, set in a condensed
-    # face so the longer word fits at their size, and the Bailiff stands behind the band on the right,
-    # peering over it, with the spoils to his left. seal is the great Seal's size, as a fraction of the
+    # stacked puts "A touch of" above the word, for the square icon, with the Bailiff behind the band a
+    # third of the way across and the great Seal above the band two thirds of the way. Otherwise the
+    # Bailiff stands behind the band on the right, peering over it, with the spoils to his left. Either
+    # way the band is centred and the title set as the suite's other covers' are, in a condensed face
+    # so the longer word fits at their size. seal is the great Seal's size, as a fraction of the
     # height, and the cover has none
     ss = int(seal * H)
-    f1 = font(['/usr/share/fonts/noto/NotoSans-Black.ttf'] if stacked else
-              ['/usr/share/fonts/noto/NotoSansSinhala-BlackCondensed.ttf'], title_size)
+    f1 = font(['/usr/share/fonts/noto/NotoSansSinhala-BlackCondensed.ttf'], title_size)
     f2 = font(['/System/Library/Fonts/Supplemental/Apple Chancery.ttf', '/usr/share/fonts/gsfonts/Z003-MediumItalic.otf',
                '/usr/share/fonts/urw-base35/Z003-MediumItalic.otf'], int(title_size * (0.62 if stacked else 0.55)))
     # the -works title turned around: the suite's "A touch of" in a script, then the Pillar's word
@@ -138,15 +137,12 @@ def make(W, H, out, title_size, px, seal, stacked=False):
     bw, ph = w2 + 2 * gap, (h2 + 2 * pad if stacked else h1)
     th = ph + gap + h1 if stacked else h1
     bh = int(th + title_size * 0.6)
+    cy = H // 2
     if stacked:
-        # the Seal's drawn height is 14/16 of its size; the gap between it and the band matches the
-        # margins above and below
-        sh_ = ss * 14 // 16
-        m = (H - sh_ - bh) // 3
-        sy, cy, sx = m + sh_ // 2, 2 * m + sh_ + bh // 2, W // 2
+        # the Seal, its drawn height 14/16 of its size, centred in the room above the band
+        sx, sy = 2 * W // 3, (cy - bh // 2) // 2
         bx, b = W // 3, bailiff(int(H * 0.94))
     else:
-        cy = H // 2
         bx, b = int(W * 0.86), bailiff(int(H * 0.9))
     top, bot = cy - bh // 2, cy + bh // 2
     rows = [] if stacked else [top // 2, (bot + H) // 2]
@@ -178,4 +174,4 @@ def make(W, H, out, title_size, px, seal, stacked=False):
 
 
 make(1280, 640, 'publish/atouchofwickedness-cover.png', 150, 80, 0)
-make(512, 512, 'publish/atouchofwickedness-icon.png', 74, 48, 0.42, stacked=True)
+make(512, 512, 'publish/atouchofwickedness-icon.png', 84, 56, 0.3, stacked=True)
