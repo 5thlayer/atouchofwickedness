@@ -76,9 +76,9 @@ def bailiff(h):
     return halo
 
 
-def field(W, H, px, seed, rows, right):
-    # the dark, with the spoils set out once each, half above the band and half below it, in the same
-    # columns between the left edge and right
+def field(W, H, px, seed, rows):
+    # the dark, with the spoils set out once each in rows, each row (y, spoils, x0, x1) spreading its
+    # spoils evenly between x0 and x1
     rng = random.Random(seed)
     img = Image.new('RGBA', (W, H), BG + (255,))
     d = ImageDraw.Draw(img)
@@ -86,11 +86,9 @@ def field(W, H, px, seed, rows, right):
         v = rng.randrange(10, 22)
         x, y = rng.randrange(W), rng.randrange(H)
         d.point((x, y), fill=(v + 6, v - 4, v - 2))
-    n = len(SPOILS) // max(1, len(rows))
-    for i, cy in enumerate(rows):
-        for j in range(n):
-            cx = int(right * (j + 0.5) / n)
-            draw = SPOILS[i * n + j]
+    for cy, spoils, x0, x1 in rows:
+        for j, draw in enumerate(spoils):
+            cx = x0 + int((x1 - x0) * (j + 0.5) / len(spoils))
             if draw is SPOILS[0]:
                 g = glow(HAZE, int(px * 1.8), 110)
                 img.alpha_composite(g, (cx - g.width // 2, cy - g.height // 2))
@@ -119,11 +117,11 @@ def font(names, size):
 
 def make(W, H, out, title_size, px, seal, stacked=False):
     # stacked puts "A touch of" above the word, for the square icon, with the Bailiff behind the band a
-    # third of the way across and the great Seal above the band two thirds of the way. Otherwise the
-    # Bailiff stands behind the band on the right, peering over it, with the spoils to his left. Either
-    # way the band is centred and the title set as the suite's other covers' are, in a condensed face
-    # so the longer word fits at their size. seal is the great Seal's size, as a fraction of the
-    # height, and the cover has none
+    # third of the way across, the great Seal above the band two thirds of the way, and the other spoils
+    # below it. Otherwise the Bailiff stands behind the band on the right, peering over it, with the
+    # spoils to his left. Either way the band is centred and the title set as the suite's other
+    # covers' are, in a condensed face so the longer word fits at their size. seal is the great Seal's
+    # size, as a fraction of the height, and the cover has none
     ss = int(seal * H)
     f1 = font(['/usr/share/fonts/noto/NotoSansSinhala-BlackCondensed.ttf'], title_size)
     f2 = font(['/System/Library/Fonts/Supplemental/Apple Chancery.ttf', '/usr/share/fonts/gsfonts/Z003-MediumItalic.otf',
@@ -145,8 +143,14 @@ def make(W, H, out, title_size, px, seal, stacked=False):
     else:
         bx, b = int(W * 0.86), bailiff(int(H * 0.9))
     top, bot = cy - bh // 2, cy + bh // 2
-    rows = [] if stacked else [top // 2, (bot + H) // 2]
-    img = field(W, H, px, 11, rows, bx - b.width // 2)
+    if stacked:
+        # the rest of the spoils below the band, between the Bailiff's robe and the right edge
+        rows = [((bot + H) // 2, SPOILS[1:], bx + b.width // 5, W)]
+    else:
+        # two spoils above the band and two below, in the same columns left of the Bailiff
+        x1 = bx - b.width // 2
+        rows = [(top // 2, SPOILS[:2], 0, x1), ((bot + H) // 2, SPOILS[2:], 0, x1)]
+    img = field(W, H, px, 11, rows)
     img.alpha_composite(b, (bx - b.width // 2, H // 2 - b.height // 2))
     band = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     ImageDraw.Draw(band).rectangle([0, top, W, bot], fill=(6, 3, 4, 240))
