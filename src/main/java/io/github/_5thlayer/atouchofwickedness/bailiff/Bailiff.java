@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
@@ -63,7 +62,7 @@ import org.jspecify.annotations.Nullable;
  * nothing to rob it mugs its player instead: it goes for them, and its first hit that lands takes
  * one stack from their main inventory or hotbar, never the held item, their worn armour or off
  * hand, and it goes to taunt them. A player with nothing worth taking it taunts at once,
- * empty-handed. Whichever stack it takes it draws by Value ({@link ItemValues}): each as likely as
+ * empty-handed. Whichever stack it takes it draws by Value ({@link Value}): each as likely as
  * its share of what all those it may take are worth, so never one worth nothing. Until it has its
  * haul, an item lying near it worth going for, its dead player's drops included, is its haul too:
  * it walks to the nearest and picks it up; junk on the ground it leaves. On Peaceful its hits deal
@@ -390,33 +389,37 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
      */
     private void steal(ServerPlayer target) {
         var inventory = target.getInventory();
-        take(inventory, inventory.getNonEquipmentItems().size(), held(inventory));
+        seizeFrom(inventory, Value.fromPlayer(stacks(inventory.getNonEquipmentItems()), inventory.getSelectedSlot(),
+                WickednessConfig.valueRules(), getRandom().nextDouble()));
     }
 
     /** @return whether the inventory holds a stack the Bailiff may take and that is worth taking */
     private static boolean hasTakeable(Inventory inventory) {
-        return Value.anyWorth(worth(inventory, inventory.getNonEquipmentItems().size(), held(inventory)));
+        return Value.playerHasTakeable(stacks(inventory.getNonEquipmentItems()), inventory.getSelectedSlot(),
+                WickednessConfig.valueRules());
     }
 
-    /** @return the inventory's selected slot, which the Bailiff never takes from */
-    private static IntPredicate held(Inventory inventory) {
-        return slot -> slot == inventory.getSelectedSlot();
+    /** Takes one stack by Value from {@code container}, any of its slots. */
+    private void rob(Container container) {
+        var items = new ArrayList<ItemStack>(container.getContainerSize());
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            items.add(container.getItem(slot));
+        }
+        seizeFrom(container, Value.fromContainer(stacks(items), WickednessConfig.valueRules(), getRandom().nextDouble()));
     }
 
-    /**
-     * Takes one stack by Value from the first {@code slots} of {@code container}, but none that
-     * {@code kept} keeps, a seizure its player discovers while they are in its level.
-     *
-     * @return whether there was a stack worth taking
-     */
-    private boolean take(Container container, int slots, IntPredicate kept) {
-        int slot = Value.draw(worth(container, slots, kept), getRandom().nextDouble());
+    /** @return what each of {@code items} shows the Bailiff, by slot */
+    private static List<Value.Stack> stacks(List<ItemStack> items) {
+        return items.stream().map(ItemValues::stack).toList();
+    }
+
+    /** Seizes the stack in {@code slot} of {@code container}, none when the slot is -1, as when nothing there was worth taking. */
+    private void seizeFrom(Container container, int slot) {
         if (slot < 0) {
-            return false;
+            return;
         }
         seize(container.removeItemNoUpdate(slot));
         container.setChanged();
-        return true;
     }
 
     /** Adds {@code stack} to its haul, a seizure its player discovers, whether it was theirs or lay on the ground. */
@@ -427,20 +430,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         if (level() instanceof ServerLevel level && target(level) instanceof ServerPlayer target) {
             Discoveries.seized(target);
         }
-    }
-
-    /**
-     * @return what each of the first {@code slots} of {@code container} is worth to the Bailiff, by
-     *         slot, nothing for one empty or that {@code kept} keeps
-     */
-    private static long[] worth(Container container, int slots, IntPredicate kept) {
-        var worth = new long[slots];
-        for (int slot = 0; slot < slots; slot++) {
-            if (!kept.test(slot)) {
-                worth[slot] = ItemValues.of(container.getItem(slot));
-            }
-        }
-        return worth;
     }
 
     /** Picks up {@code item}, its haul, as a mob picks up loot, and goes to taunt its player. */
@@ -539,7 +528,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             if (robbing == null) {
                 walkTo(container);
             } else if (ticks >= TICKS_TO_TAKE) {
-                take(container, container.getContainerSize(), slot -> false);
+                rob(container);
                 leave();
             }
         }
@@ -651,8 +640,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             if (!visit.wantsLoose()) {
                 return false;
             }
+            var rules = WickednessConfig.valueRules();
             item = level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(WickednessConfig.pickupRadius()),
-                            loose -> loose.isAlive() && ItemValues.worthPickingUp(loose.getItem()) && !outOfReach.contains(loose))
+                            loose -> loose.isAlive() && Value.worthPickingUp(ItemValues.stack(loose.getItem()), rules) && !outOfReach.contains(loose))
                     .stream().min(Comparator.comparingDouble(Bailiff.this::distanceToSqr)).orElse(null);
             return item != null;
         }

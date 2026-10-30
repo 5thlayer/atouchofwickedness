@@ -4,7 +4,6 @@
 package io.github._5thlayer.atouchofwickedness.bailiff;
 
 import io.github._5thlayer.atouchofwickedness.ATouchOfWickedness;
-import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -18,8 +17,8 @@ import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
 
 /**
  * Each item's Value to the Bailiff, its entry in the data map {@code atouchofwickedness:bailiff_value},
- * so a pack can value any item, a modded one included, and the rules of {@link Value} on top of it for
- * what belongs to the stack: its count and its enchantments, a book's stored ones included. An item
+ * so a pack can value any item, a modded one included, read with what else of a stack {@link Value}
+ * prices: its count and its enchantments, a book's stored ones included. An item
  * that holds items, such as a shulker box or a bundle, is worth its own Value, whatever it holds.
  */
 public final class ItemValues {
@@ -40,27 +39,11 @@ public final class ItemValues {
         modBus.addListener(RegisterDataMapTypesEvent.class, event -> event.register(VALUE));
     }
 
-    /** @return what each item of {@code stack} is worth to the Bailiff, its enchantments included */
-    public static long perItem(ItemStack stack) {
-        return perItem(stack, WickednessConfig.valueRules());
-    }
-
-    private static long perItem(ItemStack stack, Value.Rules rules) {
-        int value = Value.of(stack.getItem().builtInRegistryHolder().getData(VALUE), rules);
+    /** @return what {@code stack} shows the Bailiff: its item's entry, its enchantments' levels, stored ones included, and its count */
+    public static Value.Stack stack(ItemStack stack) {
         int levels = levels(stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY))
                 + levels(stack.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY));
-        return Value.perItem(value, levels, rules);
-    }
-
-    /** @return what {@code stack} is worth to the Bailiff, nothing when it is empty */
-    public static long of(ItemStack stack) {
-        return stack.isEmpty() ? 0 : Value.ofStack(perItem(stack), stack.getCount());
-    }
-
-    /** @return whether {@code stack}, lying on the ground, is worth the Bailiff going for */
-    public static boolean worthPickingUp(ItemStack stack) {
-        var rules = WickednessConfig.valueRules();
-        return !stack.isEmpty() && Value.worthPickingUp(perItem(stack, rules), rules);
+        return new Value.Stack(stack.getItem().builtInRegistryHolder().getData(VALUE), levels, stack.getCount());
     }
 
     private static int levels(ItemEnchantments enchantments) {
