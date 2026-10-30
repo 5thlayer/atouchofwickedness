@@ -7,7 +7,7 @@ import java.util.Locale;
 
 /**
  * The rough band of a player's Wickedness against their Threshold, which the Tally Stick shows and
- * never the number: Clean, Marked, Overdue or Forfeit. Plain Java, so JUnit tests it.
+ * never the number: Clean, Marked, Overdue or Forfeit. The {@link Tally} reads it.
  */
 public enum Standing {
     CLEAN,
@@ -25,27 +25,8 @@ public enum Standing {
     public record Bands(double marked, double overdue, double forfeit) {
     }
 
-    /** @return the Standing of {@code wickedness} against {@code threshold} */
-    public static Standing of(int wickedness, int threshold, Bands bands) {
-        if (reaches(wickedness, threshold, bands.forfeit())) {
-            return FORFEIT;
-        }
-        if (reaches(wickedness, threshold, bands.overdue())) {
-            return OVERDUE;
-        }
-        if (reaches(wickedness, threshold, bands.marked())) {
-            return MARKED;
-        }
-        return CLEAN;
-    }
-
     /** The translation key of the Standing's name in the action bar. */
     public String translationKey() {
         return "atouchofwickedness.standing." + name().toLowerCase(Locale.ROOT);
-    }
-
-    private static boolean reaches(int wickedness, int threshold, double fraction) {
-        // A hair under, so 90% of 80, which doubles hold as 72.00000000000001, starts at 72.
-        return wickedness >= fraction * threshold - 1e-9;
     }
 }

@@ -3,7 +3,6 @@
 
 package io.github._5thlayer.atouchofwickedness.gametest;
 
-import io.github._5thlayer.atouchofwickedness.wickedness.Decay;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -54,7 +53,7 @@ final class WayBackTests {
         // A tick for Decay to read the clock, then a whole day passes at once, as sleeping skips a night.
         helper.startSequence()
                 .thenIdle(1)
-                .thenExecute(() -> clocks.setTotalTicks(clock, clocks.getTotalTicks(clock) + Decay.TICKS_PER_DAY))
+                .thenExecute(() -> clocks.setTotalTicks(clock, clocks.getTotalTicks(clock) + 24_000))
                 .thenWaitUntil(() -> assertWickedness(helper, player, WICKEDNESS - 10, "an in-game day"))
                 .thenSucceed();
     }

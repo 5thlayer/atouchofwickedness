@@ -5,11 +5,16 @@ package io.github._5thlayer.atouchofwickedness.wickedness;
 
 import java.util.function.Supplier;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import io.github._5thlayer.atouchofwickedness.ATouchOfWickedness;
 import io.github._5thlayer.atouchofwickedness.WickednessConfig;
 import io.github._5thlayer.atouchofwickedness.bailiff.Arrival;
 import io.github._5thlayer.atouchofwickedness.discovery.Discoveries;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.IEventBus;
@@ -32,15 +37,29 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * respawn.
  * Wickedness and the Threshold are copied through death, so dying changes neither. As Wickedness
  * nears the Threshold, the player hears {@link WarningSounds}.
+ * <p>
+ * The rules are the {@link Tally}'s; this is its adapter to the player's attachment, the server's
+ * tick, Discovery and the Bailiff's {@link Arrival}. A player in Creative or Spectator gains nothing,
+ * atones for nothing, is never visited and is not watched for Warnings.
  */
 public final class Wickedness {
 
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, ATouchOfWickedness.MOD_ID);
 
+    /** The Tally as it is saved with the player, and never sent to the client (ADR 0002). */
+    private static final MapCodec<Tally> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            ExtraCodecs.NON_NEGATIVE_INT.fieldOf("wickedness").forGetter(Tally::wickedness),
+            ExtraCodecs.POSITIVE_INT.fieldOf("threshold").forGetter(Tally::threshold),
+            Codec.LONG.optionalFieldOf("decay_carry", 0L).forGetter(Tally::decayCarry),
+            ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("gifts", 0).forGetter(Tally::gifts),
+            Codec.LONG.optionalFieldOf("gift_day", 0L).forGetter(Tally::giftDay),
+            Codec.LONG.optionalFieldOf("arrived_at", Tally.NEVER).forGetter(Tally::arrivedAt)
+    ).apply(instance, Tally::new));
+
     private static final Supplier<AttachmentType<Tally>> TALLY = ATTACHMENTS.register("wickedness",
-            () -> AttachmentType.builder(holder -> new Tally(0, draw(holder instanceof Entity entity ? entity.getRandom() : RandomSource.create())))
-                    .serialize(Tally.CODEC)
+            () -> AttachmentType.builder(holder -> Tally.fresh(rules(), (holder instanceof Entity entity ? entity.getRandom() : RandomSource.create())::nextInt))
+                    .serialize(CODEC)
                     .copyOnDeath()
                     .build());
 
@@ -53,29 +72,30 @@ public final class Wickedness {
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> event.getEntity().getData(TALLY));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> {
             boolean retry = event.getServer().getTickCount() % WickednessConfig.ticksBetweenRetries() == 0;
-            event.getServer().getPlayerList().getPlayers().forEach(player -> tick(player, retry));
+            var rules = rules();
+            event.getServer().getPlayerList().getPlayers().forEach(player -> tick(player, retry, rules));
         });
     }
 
     /** @return the player's Wickedness */
     public static int of(ServerPlayer player) {
-        return player.getData(TALLY).wickedness;
+        return player.getData(TALLY).wickedness();
     }
 
     /** @return the player's Threshold */
     public static int threshold(ServerPlayer player) {
-        return player.getData(TALLY).threshold;
+        return player.getData(TALLY).threshold();
     }
 
     /** @return the player's Standing, the rough band of their Wickedness against their Threshold */
     public static Standing standing(ServerPlayer player) {
-        var tally = player.getData(TALLY);
-        return Standing.of(tally.wickedness, tally.threshold, WickednessConfig.bands());
+        return player.getData(TALLY).standing(rules());
     }
 
     /** Adds {@code amount}, which may be negative, to the player's Wickedness, never below 0. */
     public static void add(ServerPlayer player, int amount) {
-        set(player, (int) Math.clamp((long) of(player) + amount, 0, Integer.MAX_VALUE));
+        player.getData(TALLY).add(amount);
+        visit(player, rules());
     }
 
     /** @return whether the player's deeds count: not in Creative or Spectator, who gain nothing and are never visited */
@@ -88,25 +108,16 @@ public final class Wickedness {
      * reaches the Threshold, unless the player is in Creative or Spectator.
      */
     public static void set(ServerPlayer player, int value) {
-        var tally = player.getData(TALLY);
-        tally.wickedness = Math.max(0, value);
-        player.setData(TALLY, tally);
-        visit(player, tally);
+        player.getData(TALLY).set(value);
+        visit(player, rules());
     }
 
-    /**
-     * Sends the Bailiff once the player's Wickedness is at their Threshold, the player is alive and
-     * the cooldown after the last one is over, and as it arrives resets Wickedness to 0, draws a new Threshold and
-     * starts the cooldown, in the tally the player holds.
-     */
-    private static void visit(ServerPlayer player, Tally tally) {
+    /** Sends the Bailiff once one is due and the player counts and is alive, and tells the Tally it arrived. */
+    private static void visit(ServerPlayer player, Tally.Rules rules) {
+        var tally = player.getData(TALLY);
         long now = player.level().getGameTime();
-        if (tally.wickedness >= tally.threshold && counts(player) && player.isAlive()
-                && VisitCooldown.over(tally.arrivedAt, now, WickednessConfig.ticksBetweenVisits())
-                && Arrival.arrive(player)) {
-            tally.wickedness = 0;
-            tally.threshold = draw(player.getRandom());
-            tally.arrivedAt = now;
+        if (counts(player) && player.isAlive() && tally.arrivalDue(now, rules) && Arrival.arrive(player)) {
+            tally.arrived(now, rules, player.getRandom()::nextInt);
         }
     }
 
@@ -116,44 +127,37 @@ public final class Wickedness {
      * is over, never at once, as for a player logging out.
      */
     public static void owe(ServerPlayer player) {
-        var tally = player.getData(TALLY);
-        tally.wickedness = Math.max(tally.wickedness, tally.threshold);
-        player.setData(TALLY, tally);
+        player.getData(TALLY).owe();
         Discoveries.owing(player);
     }
 
     /** Lowers the player's Wickedness by an Atonement of {@code amount}, unless the player is in Creative or Spectator. */
     public static void atone(ServerPlayer player, int amount) {
-        if (counts(player) && amount > 0) {
-            int before = of(player);
-            set(player, Atonement.lowered(before, amount));
-            if (of(player) < before) {
-                Discoveries.atoned(player);
-            }
+        if (counts(player) && player.getData(TALLY).atone(amount)) {
+            Discoveries.atoned(player);
         }
     }
 
     /** Lowers the player's Wickedness by a gift's Atonement, while their gifts today are under the cap. */
     public static void gift(ServerPlayer player) {
-        if (!counts(player)) {
-            return;
-        }
-        var tally = player.getData(TALLY);
-        var rules = WickednessConfig.atonementRules();
-        long today = Decay.dayOf(player.level().getOverworldClockTime());
-        if (tally.gifts.counts(today, rules.giftsPerDay())) {
-            tally.gifts = tally.gifts.plusOne(today);
-            atone(player, rules.gift());
+        if (counts(player) && player.getData(TALLY).gift(player.level().getOverworldClockTime(), rules())) {
+            Discoveries.atoned(player);
         }
     }
 
-    /** Runs the player's Decay, on a retry tick tries the Bailiff's arrival again, and sounds any Warning due. */
-    private static void tick(ServerPlayer player, boolean retry) {
-        decay(player);
-        if (retry) {
-            visit(player, player.getData(TALLY));
+    /**
+     * Runs the player's Decay, and unless the player is in Creative or Spectator, on a retry tick
+     * tries the Bailiff's arrival again and sounds any Warning due.
+     */
+    private static void tick(ServerPlayer player, boolean retry, Tally.Rules rules) {
+        player.getData(TALLY).decay(player.level().getOverworldClockTime(), rules);
+        if (!counts(player)) {
+            return;
         }
-        warn(player);
+        if (retry) {
+            visit(player, rules);
+        }
+        warn(player, rules);
     }
 
     /**
@@ -161,45 +165,25 @@ public final class Wickedness {
      * player joins with included. A player in Creative or Spectator is not watched, so one whose
      * Standing rose meanwhile hears its Warning and discovers it on coming back.
      */
-    private static void warn(ServerPlayer player) {
-        if (!counts(player)) {
-            return;
+    private static void warn(ServerPlayer player, Tally.Rules rules) {
+        var look = player.getData(TALLY).look(player.level().getGameTime(), rules);
+        if (look.warns()) {
+            WarningSounds.play(player, look.standing(), rules.warnings().of(look.standing()).distance());
         }
-        var tally = player.getData(TALLY);
-        var standing = standing(player);
-        long now = player.level().getGameTime();
-        var rules = WickednessConfig.warningRules();
-        if (Warning.due(tally.seen, standing, tally.warnedAt, now, rules)) {
-            WarningSounds.play(player, standing, rules.of(standing).distance());
-            tally.warnedAt = now;
-        }
-        if (standing != tally.seen) {
-            Discoveries.standing(player, standing);
-        }
-        tally.seen = standing;
-    }
-
-    /** Runs the player's Decay over the clock's ticks since it last ran, which the first tick seen only reads. */
-    private static void decay(ServerPlayer player) {
-        var tally = player.getData(TALLY);
-        long now = player.level().getOverworldClockTime();
-        long elapsed = tally.decayedAt == Tally.UNSEEN ? 0 : now - tally.decayedAt;
-        tally.decayedAt = now;
-        var decayed = Decay.over(new Decay.State(tally.wickedness, tally.decayCarry), elapsed, WickednessConfig.decayPerDay());
-        tally.decayCarry = decayed.carry();
-        if (decayed.wickedness() != tally.wickedness) {
-            set(player, decayed.wickedness());
+        if (look.changed()) {
+            Discoveries.standing(player, look.standing());
         }
     }
 
     /** Sets the player's Threshold, at least 1, until the next visit draws another. */
     public static void setThreshold(ServerPlayer player, int threshold) {
-        var tally = player.getData(TALLY);
-        tally.threshold = Math.max(1, threshold);
-        player.setData(TALLY, tally);
+        player.getData(TALLY).setThreshold(threshold);
     }
 
-    private static int draw(RandomSource random) {
-        return Threshold.draw(WickednessConfig.thresholdMin(), WickednessConfig.thresholdMax(), random::nextInt);
+    /** @return the config's numbers for a Tally, read afresh so a reload applies at once */
+    private static Tally.Rules rules() {
+        var atonement = WickednessConfig.atonementRules();
+        return new Tally.Rules(WickednessConfig.thresholdMin(), WickednessConfig.thresholdMax(), WickednessConfig.ticksBetweenVisits(),
+                WickednessConfig.decayPerDay(), WickednessConfig.bands(), WickednessConfig.warningRules(), atonement.gift(), atonement.giftsPerDay());
     }
 }
