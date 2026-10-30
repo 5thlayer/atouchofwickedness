@@ -16,8 +16,8 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 /**
  * A Bailiff with Seizable containers its player opened near where it arrived takes one stack from
  * the nearest, taunts its player and flees, and never mugs them: never from one they didn't open,
- * another player's, an ender chest or a shulker box, nor one out of reach. Hit as it robs or
- * taunts, it flees at once.
+ * another player's, an ender chest or a shulker box, nor one out of reach. Hit by its player as it
+ * robs, it closes the chest and flees at once.
  */
 final class RobberyTests {
 
@@ -35,8 +35,7 @@ final class RobberyTests {
         tests.test("robbery_one_stack_from_the_nearest_container_the_player_opened_then_a_taunt", 400, RobberyTests::openedIsRobbed);
         tests.test("robbery_another_players_chest_is_never_robbed", 300, RobberyTests::anotherPlayers);
         tests.test("robbery_an_ender_chest_or_a_shulker_box_is_never_robbed", 300, RobberyTests::enderChestAndShulkerBox);
-        tests.test("robbery_hit_as_it_robs_it_closes_the_chest_and_flees_with_nothing", 300, RobberyTests::hitWhileRobbing);
-        tests.test("robbery_hit_as_it_taunts_it_flees", 400, RobberyTests::hitWhileTaunting);
+        tests.test("robbery_hit_as_it_robs_it_closes_the_chest_and_flees_with_nothing", 60, RobberyTests::hitWhileRobbing);
         tests.test("robbery_with_no_container_in_reach_it_goes_for_its_player", 200, RobberyTests::noneInReach);
         tests.test("robbery_a_block_a_datapack_adds_to_the_tag_is_robbed", 300, RobberyTests::datapackTag);
     }
@@ -111,21 +110,22 @@ final class RobberyTests {
         Players.stock(player, new ItemStack(Items.EMERALD, 7));
         Containers.stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3), new ItemStack(Items.GOLD_INGOT, 9));
         Containers.open(helper, player, OPENED);
-        var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
+        // Within reach of the chest, so it opens it as its goals next choose, with no walk to it.
+        var bailiff = Bailiffs.comeFor(helper, BESIDE, player);
         var chest = helper.absolutePos(OPENED);
         helper.startSequence()
-                .thenWaitUntil(() -> {
+                .thenIdle(4)
+                .thenExecute(() -> {
                     if (ChestBlockEntity.getOpenCount(helper.getLevel(), chest) == 0) {
                         throw helper.assertionException("the Bailiff has not opened the chest");
                     }
-                })
-                .thenExecute(() -> {
                     player.attack(bailiff);
                     if (!bailiff.isFleeing()) {
                         throw helper.assertionException("hit as it robbed, the Bailiff did not flee");
                     }
                 })
-                .thenWaitUntil(() -> {
+                .thenIdle(4)
+                .thenExecute(() -> {
                     if (ChestBlockEntity.getOpenCount(helper.getLevel(), chest) != 0) {
                         throw helper.assertionException("the Bailiff left the chest open as it fled");
                     }
@@ -134,26 +134,6 @@ final class RobberyTests {
                     assertStacks(helper, OPENED, 2, "the Bailiff robbed the chest after its player hit it");
                     if (Bailiffs.stacksIn(player.getInventory()) != 1) {
                         throw helper.assertionException("the Bailiff mugged its player after they hit it");
-                    }
-                })
-                .thenSucceed();
-    }
-
-    private static void hitWhileTaunting(GameTestHelper helper) {
-        var player = Players.join(helper, PLAYER);
-        Containers.stocked(helper, OPENED, Blocks.CHEST, new ItemStack(Items.LAPIS_LAZULI, 3));
-        Containers.open(helper, player, OPENED);
-        var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
-        helper.startSequence()
-                .thenWaitUntil(() -> {
-                    if (!bailiff.isTaunting()) {
-                        throw helper.assertionException("the Bailiff has not started taunting its player");
-                    }
-                })
-                .thenExecute(() -> {
-                    player.attack(bailiff);
-                    if (!bailiff.isFleeing()) {
-                        throw helper.assertionException("hit as it taunted, the Bailiff did not flee");
                     }
                 })
                 .thenSucceed();
