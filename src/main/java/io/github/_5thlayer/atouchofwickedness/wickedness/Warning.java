@@ -3,9 +3,7 @@
 
 package io.github._5thlayer.atouchofwickedness.wickedness;
 
-/**
- * How a Warning sounds in each band, and how often: the {@link Tally} has when one sounds.
- */
+/** How far from its player each band's Warning sounds, and how often it sounds again: the {@link Tally} says when. */
 public final class Warning {
 
     private Warning() {

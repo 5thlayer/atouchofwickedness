@@ -26,8 +26,11 @@ import java.util.function.IntUnaryOperator;
  */
 final class Tally {
 
-    /** No Bailiff has arrived for the player yet, no Warning has sounded, or Decay has read no clock. */
+    /** No Bailiff has arrived for the player yet, or no Warning has sounded. */
     static final long NEVER = Long.MIN_VALUE;
+
+    /** No clock reading yet: Decay counts from the first the player is seen. */
+    private static final long UNSEEN = Long.MIN_VALUE;
 
     /** The ticks of an in-game day, on the world's clock. */
     static final long TICKS_PER_DAY = 24_000;
@@ -71,8 +74,8 @@ final class Tally {
     private long giftDay;
     /** The game time the player's last Bailiff arrived, or {@link #NEVER}. */
     private long arrivedAt;
-    /** The world's clock when Decay last read it, never saved, so no Decay accrues while the player is away. */
-    private long decayedAt = NEVER;
+    /** The world's clock when Decay last read it, or {@link #UNSEEN}, never saved, so no Decay accrues while the player is away. */
+    private long decayedAt = UNSEEN;
     /** The player's Standing when last seen, never saved, so a player who joins Marked or worse hears a Warning at once. */
     private Standing seen = Standing.CLEAN;
     /** The game time of the player's last Warning, never saved, or {@link #NEVER}. */
@@ -192,7 +195,7 @@ final class Tally {
 
     /** Runs Decay over the world's {@code clock} ticks since it last ran, which the first reading only starts. */
     void decay(long clock, Rules rules) {
-        long elapsed = decayedAt == NEVER ? 0 : clock - decayedAt;
+        long elapsed = decayedAt == UNSEEN ? 0 : clock - decayedAt;
         decayedAt = clock;
         if (elapsed <= 0 || rules.decayPerDay() <= 0) {
             return;
