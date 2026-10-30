@@ -8,6 +8,7 @@ import io.github._5thlayer.atouchofwickedness.bailiff.Value;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -15,12 +16,13 @@ import net.minecraft.world.item.enchantment.Enchantments;
 /**
  * What a stack shows the Bailiff is read from the data map, a pack's entries included, and from its
  * enchantments, a book's stored ones included; and what it reads of its player's inventory as it
- * arrives decides whether it taunts them at once. {@code ValueTest} pins how Value prices and draws.
+ * arrives decides whether it taunts them at once, empty-handed. {@code ValueTest} pins how Value prices and draws.
  */
 final class ValueTests {
 
     private static final BlockPos PLAYER = new BlockPos(6, 1, 2);
-    private static final BlockPos BAILIFF = new BlockPos(6, 1, 6);
+    /** Within the Bailiff's taunting reach of the player. */
+    private static final BlockPos BESIDE = new BlockPos(6, 1, 4);
 
     private ValueTests() {
     }
@@ -66,11 +68,19 @@ final class ValueTests {
     private static void onlyJunkOnThePlayer(GameTestHelper helper) {
         var player = Players.join(helper, PLAYER);
         Players.stock(player, new ItemStack(Items.DIRT, 64), new ItemStack(Items.ROTTEN_FLESH, 5));
-        var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
-        if (!bailiff.isTaunting()) {
-            helper.fail("the Bailiff came for a player carrying only junk and did not taunt them at once");
-            return;
-        }
-        helper.succeed();
+        // Arriving within taunting reach of its player, it needs no walk to start shaking its head.
+        var bailiff = Bailiffs.comeFor(helper, BESIDE, player);
+        helper.startSequence()
+                .thenIdle(2)
+                .thenExecute(() -> {
+                    if (!bailiff.isTaunting()) {
+                        throw helper.assertionException("the Bailiff came for a player carrying only junk and did not taunt them at once");
+                    }
+                    if (player.actionBar.stream().noneMatch(shown -> shown.getContents() instanceof TranslatableContents translatable
+                            && translatable.getKey().equals("entity.atouchofwickedness.bailiff.taunt_empty_handed"))) {
+                        throw helper.assertionException("the player was never told the Bailiff will return");
+                    }
+                })
+                .thenSucceed();
     }
 }

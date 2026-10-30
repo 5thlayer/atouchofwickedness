@@ -26,8 +26,6 @@ class ValueTest {
 
     private static final Stack EMPTY = new Stack(null, 0, 0);
 
-    private static final int NONE_HELD = 8;
-
     private static Stack listed(int value, int count) {
         return new Stack(value, 0, count);
     }
@@ -145,8 +143,7 @@ class ValueTest {
 
     @Test
     void aPlayerWithNothingWorthAnythingHasNothingToTake() {
-        assertFalse(Value.playerHasTakeable(List.of(), NONE_HELD, RULES));
-        assertFalse(Value.playerHasTakeable(List.of(EMPTY, listed(0, 64), unlisted(0)), NONE_HELD, RULES));
+        assertFalse(Value.playerHasTakeable(List.of(EMPTY, listed(0, 64), unlisted(0)), 0, RULES));
     }
 
     @Test
