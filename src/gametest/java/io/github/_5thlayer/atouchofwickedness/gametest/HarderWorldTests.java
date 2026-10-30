@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.github._5thlayer.atouchofwickedness.bailiff.Bailiff;
+import io.github._5thlayer.atouchofwickedness.discovery.Discoveries;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -44,7 +45,7 @@ final class HarderWorldTests {
     }
 
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
-        tests.test("harder_world_it_picks_up_an_item_on_the_ground", 100, HarderWorldTests::picksUp);
+        tests.test("harder_world_it_picks_up_an_item_on_the_ground_a_seizure", 20, HarderWorldTests::picksUp);
         tests.test("harder_world_it_picks_up_its_dead_players_drops", 200, HarderWorldTests::deadPlayersDrops);
         tests.test("harder_world_a_dead_player_is_not_visited", 100, HarderWorldTests::deadPlayer);
         tests.testOnPeaceful("harder_world_on_peaceful_it_deals_no_damage_and_still_steals", 200, HarderWorldTests::peaceful);
@@ -57,16 +58,21 @@ final class HarderWorldTests {
     }
 
     private static void picksUp(GameTestHelper helper) {
-        // With nothing to take from its player, an item on the ground is its haul.
+        // With nothing to take from its player, an item on the ground is its haul, and its seizure.
         var player = Players.join(helper, PLAYER);
         var bailiff = Bailiffs.comeFor(helper, BAILIFF, player);
-        var item = helper.spawnItem(Items.DIAMOND, BAILIFF.east().getBottomCenter());
-        helper.succeedWhen(() -> {
-            if (!item.isRemoved()) {
-                throw helper.assertionException("the diamond still lies on the ground");
-            }
-            Bailiffs.assertCarries(helper, bailiff, new ItemStack(Items.DIAMOND));
-        });
+        // At its feet, so it picks it up as its goals next choose, with no walk to it.
+        var item = helper.spawnItem(Items.DIAMOND, BAILIFF.getBottomCenter());
+        helper.startSequence()
+                .thenIdle(4)
+                .thenExecute(() -> {
+                    if (!item.isRemoved()) {
+                        throw helper.assertionException("the diamond still lies at the Bailiff's feet");
+                    }
+                    Bailiffs.assertCarries(helper, bailiff, new ItemStack(Items.DIAMOND));
+                    helper.assertTrue(Discoveries.record().isKnown(player, Discoveries.SEIZURE), "the pick-up did not discover the seizure");
+                })
+                .thenSucceed();
     }
 
     private static void deadPlayersDrops(GameTestHelper helper) {

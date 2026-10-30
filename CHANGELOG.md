@@ -4,6 +4,8 @@ Written for Consumers: what a mod building against A Touch of Wickedness can use
 
 ## Unreleased
 
+- A Bailiff picking up an item from the ground, its player's drops or anyone's, now discovers `seizure` for its player, as taking a stack from them or their containers does.
+
 ## 0.1.1
 
 - Discovery: a player learns each of the Pillar's things by meeting it, as in A Touch of Darkness and A Touch of Madness. Each is a hidden advancement in the Pillar's own tab, `atouchofwickedness:discovery/<id>`, with a toast: `wicked_kill`, `gossip`, `marked`, `overdue`, `forfeit`, `bailiff`, `seizure`, `owing`, `atonement`, `seal`, `tally_stick`, `strongbox` and `bailiffs_bag`. A pack that removes one finds it known, and `discovery` in the common config, on by default, switches them all off, every thing then known. The new criterion triggers are `atouchofwickedness:wicked_kill`, `standing` (with a `standing` of `marked`, `overdue` or `forfeit`, met by that one or any above it), `bailiff_came`, `seized`, `owing`, `atoned` and `gossiped` (#19).

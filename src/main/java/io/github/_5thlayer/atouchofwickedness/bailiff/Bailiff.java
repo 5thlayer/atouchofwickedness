@@ -443,12 +443,17 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         if (slot < 0) {
             return false;
         }
-        stolen.add(container.removeItemNoUpdate(slot));
+        seize(container.removeItemNoUpdate(slot));
         container.setChanged();
+        return true;
+    }
+
+    /** Adds {@code stack} to its haul, a seizure its player discovers, whether it was theirs or lay on the ground. */
+    private void seize(ItemStack stack) {
+        stolen.add(stack);
         if (level() instanceof ServerLevel level && target(level) instanceof ServerPlayer target) {
             Discoveries.seized(target);
         }
-        return true;
     }
 
     /**
@@ -479,7 +484,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     private void pickUp(ItemEntity item) {
         onItemPickup(item);
         take(item, item.getItem().getCount());
-        stolen.add(item.getItem().copy());
+        seize(item.getItem().copy());
         item.discard();
         phase = Phase.TAUNTING;
         setTarget(null);
