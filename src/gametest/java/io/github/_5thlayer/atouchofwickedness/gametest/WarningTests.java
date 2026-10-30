@@ -14,10 +14,12 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.level.GameType;
 
 /**
  * A player entering Marked, Overdue or Forfeit hears that band's Warning, sent to them alone, so a
- * player beside them hears none. While a player is Forfeit, a cow near them flees from them, on
+ * player beside them hears none. A player in Creative is not watched, so one whose Standing rose
+ * there hears its Warning on coming back to Survival. While a player is Forfeit, a cow near them flees from them, on
  * Peaceful too.
  */
 final class WarningTests {
@@ -33,6 +35,7 @@ final class WarningTests {
 
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
         tests.test("warning_each_band_sounds_its_own_to_the_player_alone", 60, WarningTests::eachBand);
+        tests.test("warning_a_standing_risen_in_creative_sounds_on_coming_back", 20, WarningTests::creative);
         // On Peaceful, where vanilla's own avoiding never starts, since no animal there may attack a player.
         tests.testOnPeaceful("warning_forfeit_sends_a_cow_fleeing", 300, WarningTests::cowFlees);
     }
@@ -54,6 +57,28 @@ final class WarningTests {
                         throw helper.assertionException("a player beside them heard their Warning");
                     }
                 })
+                .thenSucceed();
+    }
+
+    private static void creative(GameTestHelper helper) {
+        var player = Players.join(helper, PLAYER);
+        Wickedness.setThreshold(player, 100);
+        Wickedness.set(player, 60);
+        // Overdue's Warnings come a minute apart, so only entering it sounds one within the test.
+        helper.startSequence()
+                .thenIdle(2)
+                .thenExecute(() -> {
+                    assertHeard(helper, player, WARNINGS.subList(0, 1));
+                    player.setGameMode(GameType.CREATIVE);
+                    Wickedness.set(player, 80);
+                })
+                .thenIdle(2)
+                .thenExecute(() -> {
+                    assertHeard(helper, player, WARNINGS.subList(0, 1));
+                    player.setGameMode(GameType.SURVIVAL);
+                })
+                .thenIdle(2)
+                .thenExecute(() -> assertHeard(helper, player, WARNINGS.subList(0, 2)))
                 .thenSucceed();
     }
 
