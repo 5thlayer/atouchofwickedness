@@ -4,6 +4,7 @@
 package io.github._5thlayer.atouchofwickedness.wickedness;
 
 import java.util.function.Supplier;
+import java.util.function.ToLongFunction;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -62,6 +63,9 @@ public final class Wickedness {
                     .serialize(CODEC)
                     .copyOnDeath()
                     .build());
+
+    /** The world's clock as a player's Decay and gifts read it. */
+    private static ToLongFunction<ServerPlayer> clock = player -> player.level().getOverworldClockTime();
 
     private Wickedness() {
     }
@@ -140,7 +144,7 @@ public final class Wickedness {
 
     /** Lowers the player's Wickedness by a gift's Atonement, while their gifts today are under the cap. */
     public static void gift(ServerPlayer player) {
-        if (counts(player) && player.getData(TALLY).gift(player.level().getOverworldClockTime(), rules())) {
+        if (counts(player) && player.getData(TALLY).gift(clock.applyAsLong(player), rules())) {
             Discoveries.atoned(player);
         }
     }
@@ -150,7 +154,7 @@ public final class Wickedness {
      * tries the Bailiff's arrival again and sounds any Warning due.
      */
     private static void tick(ServerPlayer player, boolean retry, Tally.Rules rules) {
-        player.getData(TALLY).decay(player.level().getOverworldClockTime(), rules);
+        player.getData(TALLY).decay(clock.applyAsLong(player), rules);
         if (!counts(player)) {
             return;
         }
@@ -178,6 +182,15 @@ public final class Wickedness {
     /** Sets the player's Threshold, at least 1, until the next visit draws another. */
     public static void setThreshold(ServerPlayer player, int threshold) {
         player.getData(TALLY).setThreshold(threshold);
+    }
+
+    /**
+     * Has {@code clock} tell the world's clock as a player's Decay and gifts read it, in place of the
+     * overworld's, for a run that sets its own clocks rather than read the world's one clock. Set
+     * once, as the mod is built, before any player joins.
+     */
+    public static void tellClockBy(ToLongFunction<ServerPlayer> clock) {
+        Wickedness.clock = clock;
     }
 
     /** @return the config's numbers for a Tally, read afresh so a reload applies at once */

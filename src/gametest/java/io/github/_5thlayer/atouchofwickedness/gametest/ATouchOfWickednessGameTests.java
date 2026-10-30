@@ -50,9 +50,10 @@ public final class ATouchOfWickednessGameTests {
     @SubscribeEvent
     static void construct(FMLConstructModEvent event) {
         register(event.getContainer().getEventBus());
-        // The dev client loads this source set too, and keeps the day's own nights.
+        // The dev client loads this source set too, and keeps the day's own nights and clock.
         if ("gameTestServer".equals(System.getProperty("libworks.run"))) {
             Nights.install();
+            Clocks.install();
         }
     }
 

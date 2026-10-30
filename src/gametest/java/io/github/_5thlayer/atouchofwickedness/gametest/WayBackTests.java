@@ -8,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
@@ -33,11 +32,14 @@ final class WayBackTests {
 
     private static final int WICKEDNESS = 50;
 
+    /** The ticks of an in-game day. */
+    private static final long DAY = 24_000;
+
     private WayBackTests() {
     }
 
     static void register(ATouchOfWickednessGameTests.Registrar tests) {
-        tests.testAlone("way_back_decay_a_day_takes_off_10", 20, WayBackTests::decay);
+        tests.test("way_back_decay_a_day_takes_off_10", 20, WayBackTests::decay);
         tests.test("way_back_breeding_takes_off_3_from_the_breeder_alone", 20, WayBackTests::breeding);
         tests.test("way_back_taming_takes_off_10", 20, WayBackTests::taming);
         tests.test("way_back_healing_a_hurt_pet_takes_off_1_per_heart", 20, WayBackTests::healingAHurtPet);
@@ -48,13 +50,12 @@ final class WayBackTests {
 
     private static void decay(GameTestHelper helper) {
         var player = wicked(helper);
-        var clocks = helper.getLevel().getServer().clockManager();
-        var clock = helper.getLevel().registryAccess().getOrThrow(WorldClocks.OVERWORLD);
-        // A tick for Decay to read the clock, then a whole day passes at once, as sleeping skips a night.
+        // A tick for Decay to read the player's clock, then a whole day passes on it at once.
         helper.startSequence()
                 .thenIdle(1)
-                .thenExecute(() -> clocks.setTotalTicks(clock, clocks.getTotalTicks(clock) + 24_000))
-                .thenWaitUntil(() -> assertWickedness(helper, player, WICKEDNESS - 10, "an in-game day"))
+                .thenExecute(() -> Clocks.pass(player, DAY))
+                .thenIdle(1)
+                .thenExecute(() -> assertWickedness(helper, player, WICKEDNESS - 10, "an in-game day"))
                 .thenSucceed();
     }
 
