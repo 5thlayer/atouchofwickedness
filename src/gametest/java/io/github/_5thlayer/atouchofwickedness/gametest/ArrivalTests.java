@@ -9,27 +9,22 @@ import io.github._5thlayer.atouchofwickedness.bailiff.BailiffContent;
 import io.github._5thlayer.atouchofwickedness.wickedness.Wickedness;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.gametest.framework.GameTestInfo;
-import net.minecraft.gametest.framework.GameTestListener;
-import net.minecraft.gametest.framework.GameTestRunner;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
  * Wickedness reaching the Threshold sends one Bailiff, 12 to 24 blocks from its player across the
  * ground, and as it arrives Wickedness drops to 0 and a new Threshold is drawn from 50 to 100. The
  * tests set a Threshold of 3, outside that range, so the redraw shows. No other Bailiff comes for
- * the player until the cooldown after that arrival is over. A Bailiff that finds no spot, or waits
- * out the cooldown, tries again every 3 seconds, so the tests wait for it a few tries' worth. Its
+ * the player within the cooldown after that arrival, which the Tally's own tests time. A Bailiff
+ * that finds no spot tries again every 3 seconds, so the tests wait for it a few tries' worth. Its
  * arrival sounds at its player, wherever it arrived.
  */
 final class ArrivalTests {
 
     private static final BlockPos PLAYER = new BlockPos(2, 1, 2);
     private static final BlockPos CREATURE = new BlockPos(4, 1, 4);
-    private static final int COOLDOWN_SECONDS = 4;
 
     private ArrivalTests() {
     }
@@ -39,8 +34,6 @@ final class ArrivalTests {
         tests.test("arrival_below_the_threshold_sends_none", 20, ArrivalTests::below);
         tests.test("arrival_with_no_spot_tries_again", 200, ArrivalTests::triesAgain);
         tests.test("arrival_sounds_at_its_player", 100, ArrivalTests::soundsAtThePlayer);
-        // In the batch after the others, since it shortens the cooldown every player's visits wait out.
-        tests.testAlone("arrival_cooldown_holds_the_next_until_it_ends", 300, ArrivalTests::cooldown);
     }
 
     private static void crossing(GameTestHelper helper) {
@@ -62,54 +55,6 @@ final class ArrivalTests {
                     }
                 })
                 .thenSucceed();
-    }
-
-    private static void cooldown(GameTestHelper helper) {
-        var player = Players.join(helper, PLAYER);
-        forceCooldown(helper, COOLDOWN_SECONDS);
-        // Far enough over each Threshold that the day this batch's Decay test skips leaves it over.
-        Wickedness.setThreshold(player, 3);
-        Wickedness.set(player, 3 + 50);
-        helper.startSequence()
-                .thenWaitUntil(() -> assertArrived(helper, player))
-                .thenExecute(() -> {
-                    Bailiffs.of(player).forEach(Entity::discard);
-                    Wickedness.set(player, Wickedness.threshold(player) + 50);
-                })
-                // Up to the cooldown's last ticks, counted from the arrival this step follows.
-                .thenExecuteFor(COOLDOWN_SECONDS * 20 - 2, () -> {
-                    if (!Bailiffs.of(player).isEmpty()) {
-                        throw helper.assertionException("a Bailiff came within the cooldown after the last");
-                    }
-                })
-                .thenWaitUntil(() -> assertArrived(helper, player))
-                .thenSucceed();
-    }
-
-    /** Shortens the cooldown between visits to {@code seconds} until the test ends. */
-    private static void forceCooldown(GameTestHelper helper, int seconds) {
-        ModConfigSpec.IntValue value = Configs.common("bailiff.secondsBetweenVisits");
-        int before = value.getAsInt();
-        value.set(seconds);
-        helper.testInfo.addListener(new GameTestListener() {
-            @Override
-            public void testStructureLoaded(GameTestInfo testInfo) {
-            }
-
-            @Override
-            public void testPassed(GameTestInfo testInfo, GameTestRunner runner) {
-                value.set(before);
-            }
-
-            @Override
-            public void testFailed(GameTestInfo testInfo, GameTestRunner runner) {
-                value.set(before);
-            }
-
-            @Override
-            public void testAddedForRerun(GameTestInfo original, GameTestInfo copy, GameTestRunner runner) {
-            }
-        });
     }
 
     private static void soundsAtThePlayer(GameTestHelper helper) {

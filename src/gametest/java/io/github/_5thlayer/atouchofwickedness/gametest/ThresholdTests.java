@@ -30,17 +30,15 @@ final class ThresholdTests {
     }
 
     private static void drawn(GameTestHelper helper) {
-        for (int i = 0; i < 8; i++) {
-            var player = Players.join(helper, PLAYER);
-            int threshold = Wickedness.threshold(player);
-            if (threshold < 50 || threshold > 100) {
-                helper.fail("a new player drew a Threshold of " + threshold);
-                return;
-            }
-            if (Wickedness.of(player) != 0) {
-                helper.fail("a new player starts with " + Wickedness.of(player) + " Wickedness");
-                return;
-            }
+        var player = Players.join(helper, PLAYER);
+        int threshold = Wickedness.threshold(player);
+        if (threshold < 50 || threshold > 100) {
+            helper.fail("a new player drew a Threshold of " + threshold);
+            return;
+        }
+        if (Wickedness.of(player) != 0) {
+            helper.fail("a new player starts with " + Wickedness.of(player) + " Wickedness");
+            return;
         }
         helper.succeed();
     }

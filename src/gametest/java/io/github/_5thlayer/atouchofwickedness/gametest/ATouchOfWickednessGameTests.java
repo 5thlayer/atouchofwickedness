@@ -66,10 +66,9 @@ public final class ATouchOfWickednessGameTests {
     private static void registerTests(RegisterGameTestsEvent event) {
         // Registered rather than borrowed, since the event hands out no lookup for vanilla's.
         var environment = event.registerEnvironment(id("default"), new TestEnvironmentDefinition.AllOf(List.of()));
-        var alone = event.registerEnvironment(id("alone"), new TestEnvironmentDefinition.AllOf(List.of()));
         var peaceful = event.registerEnvironment(id("peaceful"),
                 new TestEnvironmentDefinition.Functions(Optional.of(id("peaceful")), Optional.of(id("normal"))));
-        var tests = new Registrar(event, environment, alone, peaceful);
+        var tests = new Registrar(event, environment, peaceful);
         LoadTests.register(tests);
         CreativeTabTests.register(tests);
         WickedKillTests.register(tests);
@@ -104,15 +103,10 @@ public final class ATouchOfWickednessGameTests {
      * together, and the batches one after another, each of its own environment.
      */
     record Registrar(RegisterGameTestsEvent event, Holder<TestEnvironmentDefinition<?>> environment,
-            Holder<TestEnvironmentDefinition<?>> alone, Holder<TestEnvironmentDefinition<?>> peaceful) {
+            Holder<TestEnvironmentDefinition<?>> peaceful) {
 
         void test(String name, int maxTicks, Consumer<GameTestHelper> body) {
             register(name, maxTicks, environment, body);
-        }
-
-        /** A test that runs alone, after the others, such as one that moves the world's clock, which every test's players read. */
-        void testAlone(String name, int maxTicks, Consumer<GameTestHelper> body) {
-            register(name, maxTicks, alone, body);
         }
 
         /** A test that runs on Peaceful, in a batch of its own, back on Normal once it ends. */
