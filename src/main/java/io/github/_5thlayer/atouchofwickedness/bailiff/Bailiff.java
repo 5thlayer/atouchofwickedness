@@ -498,7 +498,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
      * Robs the base, the nearest of its player's containers first: walks to it, opens it, and after
      * half a second takes one stack from it, its haul, and goes to taunt. An empty one it closes and
      * moves on from, and one it can't reach in ten seconds, or that is no longer there, it leaves.
-     * With none left and nothing taken, it mugs its player instead.
+     * With none left and nothing taken, it mugs its player instead, or with nothing of theirs worth
+     * taking taunts them.
      */
     private final class Rob extends Goal {
 
@@ -569,8 +570,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             close();
             toRob.remove(next);
             next = null;
-            if (toRob.isEmpty()) {
-                visit.containersRanOut();
+            if (toRob.isEmpty() && level() instanceof ServerLevel level && target(level) instanceof ServerPlayer target) {
+                visit.containersRanOut(hasTakeable(target.getInventory()));
             }
         }
 

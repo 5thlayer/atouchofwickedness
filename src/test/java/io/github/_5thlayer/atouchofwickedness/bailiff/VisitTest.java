@@ -14,10 +14,11 @@ import org.junit.jupiter.api.Test;
 
 /**
  * A Visit by the rules: it sleeps through the night, its time on site counting from its waking; it
- * robs, mugs or taunts as it arrives, goes to taunt with its haul or after its hit on its player,
- * flees once it has taunted, once struck by its player as it robs or taunts, or once its time on site
- * is up; and fleeing, it charges its teleport once far enough or after running long enough, then
- * vanishes, leaving its player owing with no haul.
+ * robs, mugs or taunts as it arrives, and mugs or taunts once it has robbed every container in vain;
+ * it goes to taunt with its haul or after its hit on its player, and flees once it has taunted, once
+ * struck by its player as it robs or taunts, or once its time on site is up; and fleeing, it charges
+ * its teleport once far enough or after running long enough, then vanishes, leaving its player owing
+ * with no haul.
  */
 class VisitTest {
 
@@ -142,10 +143,18 @@ class VisitTest {
     }
 
     @Test
-    void robbingWithNoContainerLeftItMugs() {
+    void robbingWithNoContainerLeftItMugsAPlayerWithSomethingWorthTaking() {
         var visit = arrived(true, true);
-        visit.containersRanOut();
+        visit.containersRanOut(true);
         assertEquals(Phase.MUGGING, visit.phase());
+    }
+
+    @Test
+    void robbingWithNoContainerLeftItTauntsAPlayerWithNothingWorthTaking() {
+        var visit = arrived(true, true);
+        visit.containersRanOut(false);
+        assertEquals(Phase.TAUNTING, visit.phase());
+        assertTrue(visit.leavesOwing());
     }
 
     @Test

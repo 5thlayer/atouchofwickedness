@@ -5,6 +5,7 @@ Written for Consumers: what a mod building against A Touch of Wickedness can use
 ## Unreleased
 
 - A Bailiff picking up an item from the ground, its player's drops or anyone's, now discovers `seizure` for its player, as taking a stack from them or their containers does.
+- A Bailiff that robs every container its player opened in vain now taunts a player with nothing worth taking at once, empty-handed, as it does on arriving, rather than going for them first with a hit that takes nothing.
 
 ## 0.1.1
 

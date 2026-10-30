@@ -14,9 +14,10 @@ package io.github._5thlayer.atouchofwickedness.bailiff;
  * hit on it, by anyone, wakes it. Awake, it robs the containers its player opened, or with none mugs
  * its player, or with nothing of theirs worth taking taunts them at once. Its haul, a stack taken from
  * a container, its player or the ground, sends it to taunt; so does its first hit on its player that
- * lands, haul or not. Robbing with no container left and nothing taken, it mugs. Taunting, it walks up
- * to its player, while they are alive and while it isn't picking something up, until it is near enough
- * or has tried long enough, shakes its head at them, and then flees. Hit by its player as it robs or
+ * lands, haul or not. Robbing with no container left and nothing taken, it mugs its player, or with
+ * nothing of theirs worth taking taunts them. Taunting, it walks up to its player, while they are
+ * alive and while it isn't picking something up, until it is near enough or has tried long enough,
+ * shakes its head at them, and then flees. Hit by its player as it robs or
  * taunts, it flees at once, and once its time on site is up it flees whatever it has. Fleeing, once
  * far enough from its player or after running long enough, it charges its teleport, and once charged
  * it vanishes.
@@ -173,10 +174,18 @@ final class Visit {
         toTaunt();
     }
 
-    /** Robbing, it has no container left to try: with nothing taken, it mugs. */
-    void containersRanOut() {
-        if (phase == Phase.ROBBING) {
+    /**
+     * Robbing, it has no container left to try and nothing taken: it mugs its player when they have
+     * something worth taking, else taunts them.
+     */
+    void containersRanOut(boolean hasTakeable) {
+        if (phase != Phase.ROBBING) {
+            return;
+        }
+        if (hasTakeable) {
             phase = Phase.MUGGING;
+        } else {
+            toTaunt();
         }
     }
 
