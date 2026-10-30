@@ -60,6 +60,10 @@ _Avoid_: lootable, unlocked
 What an item is worth to the Bailiff, so a stack is worth its Value times its count and the dearer a stack, the likelier it is the one taken; an item a pack hasn't valued is worth a little, and one valued at nothing is never taken.
 _Avoid_: price, worth, weight (a creature's, for Wickedness)
 
+**Seizure**:
+One stack the Bailiff takes, drawn by Value from a Seizable container or from its player, or picked up off the ground.
+_Avoid_: theft, loot
+
 **Seal**:
 The material a killed Bailiff leaves, from which this Pillar crafts, so wickedness is sometimes chosen.
 _Avoid_: Wickedness Essence (the jam draft's item), essence
