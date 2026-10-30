@@ -158,18 +158,22 @@ public final class Wickedness {
 
     /**
      * Sounds the player's Warning if one is due, and tells Discovery of each new Standing, the one a
-     * player joins with included, unless the player is in Creative or Spectator.
+     * player joins with included. A player in Creative or Spectator is not watched, so one whose
+     * Standing rose meanwhile hears its Warning and discovers it on coming back.
      */
     private static void warn(ServerPlayer player) {
+        if (!counts(player)) {
+            return;
+        }
         var tally = player.getData(TALLY);
         var standing = standing(player);
         long now = player.level().getGameTime();
         var rules = WickednessConfig.warningRules();
-        if (counts(player) && Warning.due(tally.seen, standing, tally.warnedAt, now, rules)) {
+        if (Warning.due(tally.seen, standing, tally.warnedAt, now, rules)) {
             WarningSounds.play(player, standing, rules.of(standing).distance());
             tally.warnedAt = now;
         }
-        if (standing != tally.seen && counts(player)) {
+        if (standing != tally.seen) {
             Discoveries.standing(player, standing);
         }
         tally.seen = standing;
