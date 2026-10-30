@@ -24,6 +24,7 @@ Conventional commits: `<type>(<optional scope>): <summary>`, with the summary in
 ### What to test
 
 - JUnit covers every case and boundary of the plain-Java arithmetic; a game test proves each hook once (the event fires, the right player is credited, the right state is read) and never re-runs a boundary JUnit pins, unless crossing it is how the test proves the hook keeps or reads its state, such as a sixth gift in one day taking off nothing.
+- A hook's game test never waits on pathing or on a goal choosing to act: it drives the hook and reads the result at once, or after a fixed tick or two. A hook that can't be tested that way is designed away, into an input the Pillar already proves.
 - That a number is in common config is checked in review, not by a test.
 - Vanilla's own machinery, such as a loot function's Looting bonus or golems turning on bad gossip, isn't tested: force the Pillar's part to a certain outcome, such as a chance of 1, and test that.
 - A change to a rule rewrites the test that pinned the old rule, rather than adding one beside it.
