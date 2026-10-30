@@ -172,7 +172,7 @@ class VisitTest {
     @Test
     void farFromItsPlayerItTauntsOnceItHasTriedLongEnoughToGetNear() {
         var visit = arrived(false, false);
-        for (int tick = 0; tick < Visit.TICKS_TO_REACH; tick++) {
+        for (int tick = 0; tick < Visit.TICKS_TO_REACH_ITS_PLAYER; tick++) {
             assertEquals(Outcome.NONE, visit.tick(false, FAR, true, false));
         }
         assertFalse(visit.isShaking());
@@ -182,7 +182,7 @@ class VisitTest {
     @Test
     void aDeadPlayerItTauntsOnceTheyAreBack() {
         var visit = arrived(false, false);
-        for (int tick = 0; tick < Visit.TICKS_TO_REACH * 2; tick++) {
+        for (int tick = 0; tick < Visit.TICKS_TO_REACH_ITS_PLAYER * 2; tick++) {
             assertEquals(Outcome.NONE, visit.tick(false, NEAR, false, false));
         }
         assertEquals(Outcome.TAUNTS, visit.tick(false, NEAR, true, false));

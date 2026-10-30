@@ -270,7 +270,9 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         var outcome = visit.tick(isNight(), distanceTo(target), target.isAlive(), gathering);
         sync();
         if (visit.phase() != Visit.Phase.MUGGING) {
-            setTarget(null);
+            if (getTarget() != null) {
+                setTarget(null);
+            }
         } else if (target.isAlive()) {
             setTarget(target);
         }
@@ -294,7 +296,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
     private void taunt(ServerLevel level, ServerPlayer target) {
         getNavigation().stop();
         level.playSound(null, getX(), getY(), getZ(), BailiffContent.TAUNTS.get(), SoundSource.HOSTILE, 1.5F, 1.0F);
-        target.sendOverlayMessage(Component.translatable(stolen.isEmpty()
+        target.sendOverlayMessage(Component.translatable(visit.leavesOwing()
                 ? "entity.atouchofwickedness.bailiff.taunt_empty_handed" : "entity.atouchofwickedness.bailiff.taunt"));
     }
 
@@ -441,11 +443,6 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
         return worth;
     }
 
-    /** @return whether the Bailiff would pick up an item lying near it: awake, not yet fleeing, and with no haul yet */
-    private boolean wantsLoose() {
-        return visit.wantsLoose();
-    }
-
     /** Picks up {@code item}, its haul, as a mob picks up loot, and goes to taunt its player. */
     private void pickUp(ItemEntity item) {
         onItemPickup(item);
@@ -572,6 +569,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
             next = null;
             if (toRob.isEmpty() && level() instanceof ServerLevel level && target(level) instanceof ServerPlayer target) {
                 visit.containersRanOut(hasTakeable(target.getInventory()));
+                sync();
             }
         }
 
@@ -620,8 +618,8 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
                 return;
             }
             getLookControl().setLookAt(target);
-            // Its Visit says when it is near enough, or has tried long enough, and shakes its head.
-            if (!isTaunting() && distanceTo(target) > Visit.TAUNT_DISTANCE && getNavigation().isDone()) {
+            // Walks up to its player until its Visit, near enough or done trying, has it shake its head.
+            if (!isTaunting() && getNavigation().isDone()) {
                 getNavigation().moveTo(target, 1.0);
             }
         }
@@ -650,7 +648,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
         @Override
         public boolean canUse() {
-            if (!wantsLoose()) {
+            if (!visit.wantsLoose()) {
                 return false;
             }
             item = level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(WickednessConfig.pickupRadius()),
@@ -661,7 +659,7 @@ public final class Bailiff extends PathfinderMob implements ContainerUser {
 
         @Override
         public boolean canContinueToUse() {
-            return wantsLoose() && item != null && item.isAlive() && !outOfReach.contains(item);
+            return visit.wantsLoose() && item != null && item.isAlive() && !outOfReach.contains(item);
         }
 
         @Override

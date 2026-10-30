@@ -17,10 +17,9 @@ package io.github._5thlayer.atouchofwickedness.bailiff;
  * lands, haul or not. Robbing with no container left and nothing taken, it mugs its player, or with
  * nothing of theirs worth taking taunts them. Taunting, it walks up to its player, while they are
  * alive and while it isn't picking something up, until it is near enough or has tried long enough,
- * shakes its head at them, and then flees. Hit by its player as it robs or
- * taunts, it flees at once, and once its time on site is up it flees whatever it has. Fleeing, once
- * far enough from its player or after running long enough, it charges its teleport, and once charged
- * it vanishes.
+ * shakes its head at them, and then flees. Hit by its player as it robs or taunts, it flees at once,
+ * and once its time on site is up it flees whatever it has. Fleeing, once far enough from its player
+ * or after running long enough, it charges its teleport, and once charged it vanishes.
  */
 final class Visit {
 
@@ -28,10 +27,10 @@ final class Visit {
     static final int TICKS_TAUNTING = 40;
 
     /** Ticks it tries to get near its player to taunt them before it taunts from where it is. */
-    static final int TICKS_TO_REACH = 200;
+    static final int TICKS_TO_REACH_ITS_PLAYER = 200;
 
     /** How near, in blocks, it comes to its player to taunt them. */
-    static final double TAUNT_DISTANCE = 3;
+    private static final double TAUNT_DISTANCE = 3;
 
     /** Ticks it runs for before it charges its teleport wherever it got to, as when cornered. */
     static final int TICKS_TO_GET_AWAY = 400;
@@ -61,8 +60,9 @@ final class Visit {
         VANISHES
     }
 
+    /** The config's numbers, from its arrival; nothing ticks before it arrives. */
     private Rules rules = new Rules(0, 0, 0);
-    /** What it is about when awake. */
+    /** What it is about when awake, never {@link Phase#ASLEEP}: {@link #phase()} reports its sleep. */
     private Phase phase = Phase.MUGGING;
     private boolean asleep;
     private boolean haul;
@@ -134,7 +134,7 @@ final class Visit {
             }
             return Outcome.NONE;
         }
-        if (distance > TAUNT_DISTANCE && ticksTaunting <= TICKS_TO_REACH) {
+        if (distance > TAUNT_DISTANCE && ticksTaunting <= TICKS_TO_REACH_ITS_PLAYER) {
             return Outcome.NONE;
         }
         shaking = true;
