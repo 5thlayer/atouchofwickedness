@@ -32,6 +32,10 @@ _Avoid_: Naughtiness (Klei's name), karma, sin, a meter (it isn't drawn)
 The death of a non-hostile creature credited to a player, which adds that creature's weight to the player's Wickedness.
 _Avoid_: crime, sin, bad deed
 
+**Tally**:
+Everything the Pillar keeps against a player, hidden from them: their Wickedness, their Threshold, when their last Bailiff came and the gifts that counted today. The Tally Stick reads it roughly.
+_Avoid_: ledger, account, record
+
 **Threshold**:
 The hidden Wickedness at which the Bailiff comes for a player, drawn anew at random after each visit, so no one knows exactly how far they can push.
 _Avoid_: limit, max Wickedness
