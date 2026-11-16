@@ -40,13 +40,6 @@ path = [
 SPDX-FileCopyrightText = "2026 5thlayer"
 SPDX-License-Identifier = "CC-BY-4.0"
 
-# The agent skills, from mattpocock/skills.
-[[annotations]]
-path = [".claude/skills/**", ".gitmodules"]
-precedence = "override"
-SPDX-FileCopyrightText = "Matt Pocock"
-SPDX-License-Identifier = "MIT"
-
 # Third-party art takes an override stanza of its own and an entry in NOTICE that credits it.
 # Malcolm Riley's unused textures (https://github.com/malcolmriley/unused-textures): the unmodified
 # copies under data/art/ are his, and the Strongbox's chest sheet, which scripts/build-textures.py
